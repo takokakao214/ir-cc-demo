@@ -184,6 +184,15 @@ async function getProductByCCId(ccId) {
 // 製品紐付 — 製品とCCIDを紐づける
 // =====================================================
 async function bindProductCC(productDocId, ccId) {
+  // 場所マスタで使用中のCCIDでないか確認
+  var locCheck = await db.collection(LOCATIONS_COLLECTION)
+    .where('cc_id', '==', ccId)
+    .get();
+  if (!locCheck.empty) {
+    var ld = locCheck.docs[0].data();
+    throw new Error('CCID「' + ccId + '」は場所「' + ld.location_name + '」（' + ld.location_code + '）に使用されています。場所用CCIDは製品に紐づけできません。');
+  }
+  // 他の製品にすでに紐づいていないか確認
   var existing = await db.collection(PRODUCTS_COLLECTION)
     .where('cc_id', '==', ccId)
     .get();
