@@ -230,49 +230,6 @@
     .loading-text { color: #fff; font-size: 15px; font-weight: 600; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* 設定モーダル */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .modal-overlay.show { display: flex; }
-    .settings-sheet {
-      background: var(--card);
-      border-radius: 16px 16px 0 0;
-      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-      width: 100%;
-      max-width: 600px;
-    }
-    .settings-sheet h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .option-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .option-row:last-child { border-bottom: none; }
-    .option-label { font-size: 15px; font-weight: 500; }
-    .option-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    select {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 28px 6px 10px;
-      font-size: 14px;
-      background: var(--bg);
-      color: var(--text);
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      min-width: 110px;
-    }
 
     /* フェードイン */
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -284,7 +241,6 @@
 <header>
   <span style="font-size:22px;">📦</span>
   <h1 id="headerTitle">入出庫デモ</h1>
-  <button class="header-btn" onclick="openSettings()" id="settingsBtn">⚙️</button>
   <button class="header-btn" onclick="doLogout()">ログアウト</button>
 </header>
 
@@ -318,16 +274,6 @@
       </div>
     </div>
 
-    <!-- CC単体スキャン（既存機能） -->
-    <div class="card">
-      <div class="card-header"><h2>CCスキャン（単体）</h2></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-ghost" onclick="startRawScan()">
-          <span class="btn-icon">🔍</span> カメレオンコードを読み取る
-        </button>
-        <div id="rawResultArea"></div>
-      </div>
-    </div>
   </main>
 </div>
 
@@ -385,15 +331,16 @@
     <div id="lbStep1">
       <div class="step-card">
         <div class="step-num">STEP 1 / 2</div>
-        <div class="step-title">製品のCCをスキャン</div>
-        <div class="step-sub">製品に紐づけたカメレオンコードをスキャンしてください</div>
+        <div class="step-title">製品CCをまとめてスキャン</div>
+        <div class="step-sub">複数の製品に貼付されたカメレオンコードをまとめてスキャンしてください</div>
         <button class="btn btn-primary" onclick="lbScanProductCC()">
-          <span class="btn-icon">🔲</span> 製品CCをスキャン
+          <span class="btn-icon">🔲</span> 製品CCをまとめてスキャン
         </button>
       </div>
     </div>
 
     <div id="lbStep2" style="display:none;">
+      <div id="lbFoundCount" style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:8px;"></div>
       <div id="lbProductConfirm"></div>
       <div class="step-card">
         <div class="step-num">STEP 2 / 2</div>
@@ -410,12 +357,6 @@
   </main>
 </div>
 
-<!-- 設定シート -->
-<div class="modal-overlay" id="settingsModal">
-  <div class="settings-sheet">
-    <h3>⚙️ スキャン設定</h3>
-    <div class="option-row">
-      <div><div class="option-label">読み取りモード</div><div class="option-sub">1コード / 複数コード</div></div>
       <select id="optMode"><option value="multi">複数</option><option value="single">1コード</option></select>
     </div>
     <div class="option-row">
@@ -498,56 +439,72 @@
   }
 
   // =====================================================
-  // IroatoReader オプション取得
+  // IroatoReader オプション取得（ハードコード）
   // =====================================================
   function getCCOptions(singleMode) {
-    var level  = parseInt(document.getElementById('optAnalyzeLevel').value, 10);
-    var resVal = document.getElementById('optResolution').value;
-    var camVal = document.getElementById('optCameraPos').value;
-    var resMap = { 'r640x480': IroatoReader.r640x480, 'r1280x720': IroatoReader.r1280x720, 'r1920x1080': IroatoReader.r1920x1080 };
-    var camMap = { 'back': IroatoReader.back, 'front': IroatoReader.front };
     return {
       mode:           singleMode ? IroatoReader.single : IroatoReader.multi,
-      analyzeLevel:   level,
-      resolution:     resMap[resVal],
-      cameraPosition: camMap[camVal],
+      analyzeLevel:   3,
+      resolution:     IroatoReader.r640x480,
+      cameraPosition: IroatoReader.back,
       lineColor:      IroatoReader.green,
       errLineColor:   IroatoReader.red,
       buttonText:     '完了',
-      labelText:      'カメレオンコードを1つ枠内に合わせてください'
+      labelText:      singleMode ? 'カメレオンコードを1つ枠内に合わせてください' : 'カメレオンコードを枠内に合わせてください'
     };
   }
 
   function getQROptions() {
-    var resVal = document.getElementById('optResolution').value;
-    var camVal = document.getElementById('optCameraPos').value;
-    var resMap = { 'r640x480': IroatoReader.r640x480, 'r1280x720': IroatoReader.r1280x720, 'r1920x1080': IroatoReader.r1920x1080 };
-    var camMap = { 'back': IroatoReader.back, 'front': IroatoReader.front };
     return {
       mode:           IroatoReader.single,
-      resolution:     resMap[resVal],
-      cameraPosition: camMap[camVal],
+      analyzeLevel:   3,
+      resolution:     IroatoReader.r640x480,
+      cameraPosition: IroatoReader.back,
       buttonText:     '完了',
       labelText:      '製品のQRコードを枠内に合わせてください'
     };
   }
 
-  // CCスキャン共通ラッパー（Promise）
+  // CCシングルスキャン（Promise → 文字列1件）
   function scanCC(singleMode) {
     return new Promise(function (resolve, reject) {
       if (!isIroatoReaderEnv()) { reject(new Error('IroatoReaderアプリで開いてください')); return; }
       showLoading('カメラを起動中…');
       try {
-        var reader = new IroatoReader('cc', getCCOptions(singleMode !== false));
+        var reader = new IroatoReader('cc', getCCOptions(true));
         reader.read(function (res) {
           hideLoading();
           if (res == null || (!res.status && res.data == null)) { resolve(null); return; }
           var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
           if (res.status && codes.length > 0) {
-            // codes[0].code がCCID
             resolve(codes[0].code != null ? String(codes[0].code) : null);
           } else {
             resolve(null);
+          }
+        });
+      } catch (e) { hideLoading(); reject(e); }
+    });
+  }
+
+  // CCマルチスキャン（Promise → 配列）
+  function scanCCMulti() {
+    return new Promise(function (resolve, reject) {
+      if (!isIroatoReaderEnv()) { reject(new Error('IroatoReaderアプリで開いてください')); return; }
+      showLoading('カメラを起動中…');
+      try {
+        var reader = new IroatoReader('cc', getCCOptions(false));
+        reader.read(function (res) {
+          hideLoading();
+          if (res == null || (!res.status && res.data == null)) { resolve([]); return; }
+          var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
+          if (res.status && codes.length > 0) {
+            var ccIds = [];
+            for (var i = 0; i < codes.length; i++) {
+              if (codes[i].code != null) ccIds.push(String(codes[i].code));
+            }
+            resolve(ccIds);
+          } else {
+            resolve([]);
           }
         });
       } catch (e) { hideLoading(); reject(e); }
@@ -576,19 +533,7 @@
     });
   }
 
-  // =====================================================
-  // CCスキャン（単体・既存機能）
-  // =====================================================
-  function startRawScan() {
-    scanCC(false).then(function (ccId) {
-      if (ccId == null) { document.getElementById('rawResultArea').innerHTML = ''; return; }
-      document.getElementById('rawResultArea').innerHTML =
-        '<div style="margin-top:8px;background:var(--primary-light);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--primary-dark);">CCID: ' + escHtml(ccId) + '</div>';
-    }).catch(function (e) {
-      document.getElementById('rawResultArea').innerHTML =
-        '<div style="margin-top:8px;font-size:13px;color:var(--error);">⚠️ ' + escHtml(e.message) + '</div>';
-    });
-  }
+
 
   // =====================================================
   // 製品紐付 フロー
@@ -680,41 +625,59 @@
   }
 
   // =====================================================
-  // ロケーション紐付 フロー
+  // ロケーション紐付 フロー（複数製品対応）
   // =====================================================
-  var lbProduct  = null;
-  var lbLocation = null;
+  var lbProducts = []; // 複数製品を保持
 
   function lbReset() {
-    lbProduct  = null;
-    lbLocation = null;
+    lbProducts = [];
     document.getElementById('lbStep1').style.display = 'block';
     document.getElementById('lbStep2').style.display = 'none';
     document.getElementById('lbResult').style.display = 'none';
+    document.getElementById('lbFoundCount').textContent = '';
     document.getElementById('lbProductConfirm').innerHTML = '';
     document.getElementById('lbDot1').className = 'step-dot active';
     document.getElementById('lbDot2').className = 'step-dot';
   }
 
   function lbScanProductCC() {
-    scanCC(true).then(function (ccId) {
-      if (!ccId) return;
+    scanCCMulti().then(function (ccIds) {
+      if (!ccIds || ccIds.length === 0) return; // キャンセル
       showLoading('製品を検索中…');
-      return getProductByCCId(ccId).then(function (product) {
+      var promises = ccIds.map(function (ccId) {
+        return getProductByCCId(ccId).then(function (product) {
+          return { ccId: ccId, product: product };
+        });
+      });
+      return Promise.all(promises).then(function (results) {
         hideLoading();
-        if (!product) {
-          showStepError('lbStep1', 'CC「' + escHtml(ccId) + '」に紐づく製品が見つかりませんでした。<br>先に「製品紐付」を行ってください。');
+        var found    = results.filter(function (r) { return r.product != null; });
+        var notFound = results.filter(function (r) { return r.product == null; });
+
+        if (found.length === 0) {
+          showStepError('lbStep1', '読み取ったCCに紐づく製品が見つかりませんでした。<br>先に「製品紐付」を行ってください。');
           return;
         }
-        lbProduct = product;
-        var currentLoc = product.current_location_name
-          ? '<div style="font-size:12px;color:var(--warn);margin-top:6px;">現在の場所: ' + escHtml(product.current_location_name) + '</div>'
-          : '';
-        document.getElementById('lbProductConfirm').innerHTML =
-          '<div class="confirmed-item fade-in"><div class="ci-icon">✅</div><div class="ci-body">' +
-          '<div class="ci-title">' + escHtml(product.product_name) + '</div>' +
-          '<div class="ci-sub">コード: ' + escHtml(product.product_code) + ' | CC: ' + escHtml(ccId) + '</div>' +
-          currentLoc + '</div></div>';
+
+        lbProducts = found.map(function (r) { return r.product; });
+
+        // 確認リスト描画
+        var html = '';
+        found.forEach(function (r) {
+          var p = r.product;
+          var locTxt = p.current_location_name
+            ? ' <span style="color:var(--warn);">→ 現在: ' + escHtml(p.current_location_name) + '</span>' : '';
+          html += '<div class="confirmed-item"><div class="ci-icon">📦</div><div class="ci-body">' +
+            '<div class="ci-title">' + escHtml(p.product_name) + '</div>' +
+            '<div class="ci-sub">コード: ' + escHtml(p.product_code) + ' | CC: ' + escHtml(r.ccId) + locTxt + '</div>' +
+            '</div></div>';
+        });
+        if (notFound.length > 0) {
+          html += '<div style="font-size:12px;color:var(--warn);padding:8px 12px;background:var(--warn-light);border-radius:8px;margin-top:4px;">' +
+            '⚠️ ' + notFound.length + '件のCCは未登録のためスキップされます</div>';
+        }
+        document.getElementById('lbFoundCount').textContent = found.length + '件の製品が確認されました';
+        document.getElementById('lbProductConfirm').innerHTML = '<div class="fade-in">' + html + '</div>';
         document.getElementById('lbDot1').className = 'step-dot done';
         document.getElementById('lbDot2').className = 'step-dot active';
         document.getElementById('lbStep1').style.display = 'none';
@@ -727,9 +690,9 @@
   }
 
   function lbScanLocationCC() {
-    if (!lbProduct) return;
+    if (!lbProducts || lbProducts.length === 0) return;
     scanCC(true).then(function (ccId) {
-      if (!ccId) return;
+      if (!ccId) return; // キャンセル
       showLoading('場所を検索中…');
       return getLocationByCCId(ccId).then(function (location) {
         if (!location) {
@@ -744,20 +707,24 @@
             '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">最初からやり直す</button>';
           return;
         }
-        return bindProductLocation(lbProduct.id, location.id, location.location_code, location.location_name, location.cc_id)
-          .then(function () {
-            hideLoading();
-            document.getElementById('lbDot2').className = 'step-dot done';
-            document.getElementById('lbStep2').style.display = 'none';
-            document.getElementById('lbResult').style.display = 'block';
-            document.getElementById('lbResult').innerHTML =
-              '<div class="result-box fade-in">' +
-              '<div class="result-icon">✅</div>' +
-              '<div class="result-title">ロケーション紐付完了！</div>' +
-              '<div class="result-body">製品「' + escHtml(lbProduct.product_name) + '」を<br>場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
-              '</div>' +
-              '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">続けて紐付けする</button>';
-          });
+        // 全製品を同じ場所に紐づける
+        var bindPromises = lbProducts.map(function (product) {
+          return bindProductLocation(product.id, location.id, location.location_code, location.location_name, location.cc_id);
+        });
+        return Promise.all(bindPromises).then(function () {
+          hideLoading();
+          document.getElementById('lbDot2').className = 'step-dot done';
+          document.getElementById('lbStep2').style.display = 'none';
+          document.getElementById('lbResult').style.display = 'block';
+          document.getElementById('lbResult').innerHTML =
+            '<div class="result-box fade-in">' +
+            '<div class="result-icon">✅</div>' +
+            '<div class="result-title">ロケーション紐付完了！</div>' +
+            '<div class="result-body"><strong>' + lbProducts.length + '件</strong>の製品を<br>' +
+            '場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
+            '</div>' +
+            '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">続けて紐付けする</button>';
+        });
       });
     }).catch(function (e) {
       hideLoading();
@@ -772,14 +739,7 @@
     });
   }
 
-  // =====================================================
-  // 設定シート
-  // =====================================================
-  function openSettings()  { document.getElementById('settingsModal').classList.add('show'); }
-  function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
-  document.getElementById('settingsModal').addEventListener('click', function (e) {
-    if (e.target === this) closeSettings();
-  });
+
 
   // =====================================================
   // ローディング
