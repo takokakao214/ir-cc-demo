@@ -207,6 +207,31 @@
       font-size: 14px;
     }
 
+    /* アラートモーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.show { display: flex; }
+    .alert-modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px 24px 20px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .alert-modal-icon  { font-size: 44px; margin-bottom: 10px; }
+    .alert-modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .alert-modal-body  { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
     /* ローディングオーバーレイ */
     .loading-overlay {
       display: none;
@@ -357,6 +382,16 @@
   </main>
 </div>
 
+
+<!-- アラートモーダル -->
+<div class="modal-overlay" id="alertModal">
+  <div class="alert-modal">
+    <div class="alert-modal-icon"  id="alertIcon">❌</div>
+    <div class="alert-modal-title" id="alertTitle"></div>
+    <div class="alert-modal-body"  id="alertBody"></div>
+    <button class="btn btn-ghost" onclick="closeAlertModal()" style="width:100%;font-size:15px;padding:12px;">閉じる</button>
+  </div>
+</div>
 
 <!-- ローディングオーバーレイ -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -668,24 +703,18 @@
       if (!ccId) return; // キャンセル
       showLoading('場所を検索中…');
       return getLocationByCCId(ccId).then(function (location) {
+        hideLoading();
         if (!location) {
-          hideLoading();
-          document.getElementById('lbResult').style.display = 'block';
-          document.getElementById('lbResult').innerHTML =
-            '<div class="result-box error-box fade-in">' +
-            '<div class="result-icon">❌</div>' +
-            '<div class="result-title">場所が見つかりません</div>' +
-            '<div class="result-body">CC「' + escHtml(ccId) + '」に紐づく場所が登録されていません。<br>管理画面で場所マスタを登録してください。</div>' +
-            '</div>' +
-            '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">最初からやり直す</button>';
+          // 場所未登録 → モーダル表示（Step2 のまま再スキャン可能）
+          showAlertModal('❌', '場所が見つかりません',
+            'CC「' + escHtml(ccId) + '」に紐づく場所が登録されていません。<br>管理画面で場所マスタを登録してください。');
           return;
         }
-        // 全製品を同じ場所に紐づける
+        // 全製品を同じ場所に一括紐づけ
         var bindPromises = lbProducts.map(function (product) {
           return bindProductLocation(product.id, location.id, location.location_code, location.location_name, location.cc_id);
         });
         return Promise.all(bindPromises).then(function () {
-          hideLoading();
           document.getElementById('lbDot2').className = 'step-dot done';
           document.getElementById('lbStep2').style.display = 'none';
           document.getElementById('lbResult').style.display = 'block';
@@ -701,18 +730,30 @@
       });
     }).catch(function (e) {
       hideLoading();
-      document.getElementById('lbResult').style.display = 'block';
-      document.getElementById('lbResult').innerHTML =
-        '<div class="result-box error-box fade-in">' +
-        '<div class="result-icon">❌</div>' +
-        '<div class="result-title">エラー</div>' +
-        '<div class="result-body">' + escHtml(e.message) + '</div>' +
-        '</div>' +
-        '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">最初からやり直す</button>';
+      showAlertModal('❌', 'エラー', escHtml(e.message));
     });
   }
 
 
+
+  // =====================================================
+  // アラートモーダル
+  // =====================================================
+  var alertOnClose = null;
+  function showAlertModal(icon, title, body, onClose) {
+    document.getElementById('alertIcon').textContent  = icon || '❌';
+    document.getElementById('alertTitle').textContent = title || '';
+    document.getElementById('alertBody').innerHTML    = body  || '';
+    alertOnClose = onClose || null;
+    document.getElementById('alertModal').classList.add('show');
+  }
+  function closeAlertModal() {
+    document.getElementById('alertModal').classList.remove('show');
+    if (alertOnClose) { var fn = alertOnClose; alertOnClose = null; fn(); }
+  }
+  document.getElementById('alertModal').addEventListener('click', function (e) {
+    if (e.target === this) closeAlertModal();
+  });
 
   // =====================================================
   // ローディング
