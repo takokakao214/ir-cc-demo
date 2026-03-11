@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>ログイン — カメレオンコードリーダー</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --error: #dc2626;
+      --error-light: #fee2e2;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      padding-top: calc(24px + env(safe-area-inset-top));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    /* ロゴエリア */
+    .logo-area {
+      text-align: center;
+      margin-bottom: 32px;
+      color: #fff;
+    }
+
+    .logo-icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    /* カード */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    /* フォーム */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    input[type="text"].error,
+    input[type="password"].error {
+      border-color: var(--error);
+      box-shadow: 0 0 0 3px var(--error-light);
+    }
+
+    /* エラーメッセージ */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      background: var(--error-light);
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--error);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .error-msg.show {
+      display: flex;
+    }
+
+    /* ログインボタン */
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .login-btn:active {
+      background: var(--primary-dark);
+      transform: scale(0.98);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* シェイクアニメーション */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+
+    .shake {
+      animation: shake 0.4s ease;
+    }
+
+    /* フェードイン */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-wrapper {
+      animation: fadeUp 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+
+  <div class="logo-area">
+    <span class="logo-icon">📷</span>
+    <div class="logo-title">カメレオンコードリーダー</div>
+    <div class="logo-sub">IroatoReader Web App</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ログイン</div>
+
+    <div class="error-msg" id="errorMsg">
+      <span>⚠️</span>
+      <span>ユーザー名またはパスワードが違います</span>
+    </div>
+
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label for="username">ユーザー名</label>
+        <input type="text" id="username" placeholder="ユーザー名を入力"
+               autocomplete="username" autocapitalize="none" autocorrect="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <input type="password" id="password" placeholder="パスワードを入力"
+               autocomplete="current-password" />
+      </div>
+
+      <button class="login-btn" type="submit" id="loginBtn">
+        <span>🔓</span> ログイン
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // =====================================================
+  // 認証情報（変更する場合はここを編集してください）
+  // =====================================================
+  var USERS = [
+    { username: 'admin', password: '1234' }
+    // 追加する場合: { username: 'user2', password: 'pass2' }
+  ];
+
+  // =====================================================
+  // 既にログイン済みならリダイレクト
+  // =====================================================
+  (function () {
+    if (sessionStorage.getItem('cc_auth') === '1') {
+      location.replace('cc_reader.html');
+    }
+  })();
+
+  // =====================================================
+  // ログイン処理
+  // =====================================================
+  function doLogin(e) {
+    e.preventDefault();
+
+    var usernameEl = document.getElementById('username');
+    var passwordEl = document.getElementById('password');
+    var errorEl    = document.getElementById('errorMsg');
+    var btn        = document.getElementById('loginBtn');
+
+    var username = usernameEl.value.trim();
+    var password = passwordEl.value;
+
+    // 入力リセット
+    usernameEl.classList.remove('error');
+    passwordEl.classList.remove('error');
+    errorEl.classList.remove('show');
+
+    // 認証チェック
+    var matched = USERS.some(function (u) {
+      return u.username === username && u.password === password;
+    });
+
+    if (matched) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>✅</span> ログイン成功…';
+      sessionStorage.setItem('cc_auth', '1');
+      setTimeout(function () {
+        location.replace('cc_reader.html');
+      }, 600);
+    } else {
+      // 失敗アニメーション
+      usernameEl.classList.add('error');
+      passwordEl.classList.add('error');
+      errorEl.classList.add('show');
+      document.querySelector('.card').classList.add('shake');
+      setTimeout(function () {
+        document.querySelector('.card').classList.remove('shake');
+      }, 400);
+      passwordEl.value = '';
+      passwordEl.focus();
+    }
+  }
+</script>
+</body>
+</html>

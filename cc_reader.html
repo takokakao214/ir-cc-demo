@@ -2,16 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0;url=login.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>カメレオンコードリーダー</title>
-  <script>
-    // ログイン済みならリーダーへ、未ログインならログイン画面へ
-    if (sessionStorage.getItem('cc_auth') === '1') {
-      location.replace('cc_reader.html');
-    } else {
-      location.replace('login.html');
-    }
-  </script>
   <style>
     :root {
       --primary: #4f46e5;
@@ -61,6 +53,25 @@
     header h1 {
       font-size: 18px;
       font-weight: 700;
+      flex: 1;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .logout-btn:active {
+      background: rgba(255,255,255,0.35);
     }
 
     /* メインコンテンツ */
@@ -414,6 +425,7 @@
 <header>
   <span class="icon">📷</span>
   <h1>カメレオンコードリーダー</h1>
+  <button class="logout-btn" onclick="doLogout()" title="ログアウト">ログアウト</button>
 </header>
 
 <main>
@@ -526,6 +538,23 @@
 
 <script>
   // ==================================================
+  // 認証チェック（未ログインならログイン画面へ）
+  // ==================================================
+  (function () {
+    if (sessionStorage.getItem('cc_auth') !== '1') {
+      location.replace('login.html');
+    }
+  })();
+
+  // ==================================================
+  // ログアウト
+  // ==================================================
+  function doLogout() {
+    sessionStorage.removeItem('cc_auth');
+    location.replace('login.html');
+  }
+
+  // ==================================================
   // 状態管理
   // ==================================================
   var history = [];
@@ -608,21 +637,36 @@
   // 結果処理
   // ==================================================
   function handleResult(res) {
-    var now = new Date();
-    var timeStr = formatTime(now);
+    try {
+      var now = new Date();
+      var timeStr = formatTime(now);
 
-    if (res.status && res.data && res.data.codes && res.data.codes.length > 0) {
-      // 成功
-      var codes = res.data.codes;
-      renderResultSuccess(codes, timeStr);
-      addHistory(true, codes, timeStr);
-    } else {
-      // 読み取り失敗 or キャンセル
-      renderResultError(timeStr);
-      // キャンセルの場合は履歴に残さない（status=false かつ data なし）
-      if (res.data && res.data.codes !== undefined) {
+      // res が null/undefined → キャンセル扱い（何もしない）
+      if (res == null) {
+        return;
+      }
+
+      // status=false かつ data なし → キャンセル扱い（何もしない）
+      if (!res.status && (res.data == null)) {
+        return;
+      }
+
+      var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
+
+      if (res.status && codes.length > 0) {
+        // ✅ 読み取り成功
+        renderResultSuccess(codes, timeStr);
+        addHistory(true, codes, timeStr);
+      } else if (res.status && codes.length === 0) {
+        // ⚠️ カメラは起動したがコードなしで完了
+        renderResultError(timeStr);
         addHistory(false, [], timeStr);
       }
+      // status=false は上でキャンセルとして処理済み
+
+    } catch (e) {
+      // 予期しないエラーはコンソールにのみ出力し、UI は壊さない
+      console.error('handleResult error:', e);
     }
   }
 
