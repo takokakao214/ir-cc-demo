@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>カメレオンコードリーダー</title>
+  <title>入出庫デモ</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -13,6 +13,8 @@
       --success-light: #dcfce7;
       --error: #dc2626;
       --error-light: #fee2e2;
+      --warn: #d97706;
+      --warn-light: #fef3c7;
       --bg: #f8fafc;
       --card: #ffffff;
       --text: #1e293b;
@@ -20,19 +22,12 @@
       --border: #e2e8f0;
       --radius: 12px;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 0 0 env(safe-area-inset-bottom) 0;
     }
 
     /* ヘッダー */
@@ -44,19 +39,12 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    header .icon {
-      font-size: 24px;
-    }
-
-    header h1 {
-      font-size: 18px;
-      font-weight: 700;
-      flex: 1;
-    }
-
-    .logout-btn {
+    header h1 { font-size: 18px; font-weight: 700; flex: 1; }
+    .header-btn {
       background: rgba(255,255,255,0.2);
       color: #fff;
       border: 1px solid rgba(255,255,255,0.4);
@@ -65,102 +53,68 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      text-decoration: none;
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.15s;
       white-space: nowrap;
     }
 
-    .logout-btn:active {
-      background: rgba(255,255,255,0.35);
-    }
+    /* 画面 */
+    .screen { display: none; }
+    .screen.active { display: block; }
 
-    /* メインコンテンツ */
-    main {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
+    /* メイン */
+    main { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 600px; margin: 0 auto; }
 
     /* カード */
-    .card {
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-header h2 { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-body { padding: 16px; }
+
+    /* メニューグリッド */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .menu-card {
       background: var(--card);
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .card-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
+      padding: 20px 16px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      text-align: center;
+    }
+    .menu-card:active { transform: scale(0.97); background: var(--primary-light); }
+    .menu-card.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .menu-card .menu-icon { font-size: 36px; }
+    .menu-card .menu-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .menu-card .menu-sub   { font-size: 12px; color: var(--muted); }
+    .menu-card.primary-card { border-color: var(--primary); background: var(--primary-light); }
+    .coming-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--warn-light);
+      color: var(--warn);
+      padding: 2px 7px;
+      border-radius: 20px;
     }
 
-    .card-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .card-body {
-      padding: 16px;
-    }
-
-    /* オプション設定 */
-    .option-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .option-row:last-child {
-      border-bottom: none;
-    }
-
-    .option-label {
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .option-sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    select {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 14px;
-      background: var(--bg);
-      color: var(--text);
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      padding-right: 28px;
-      min-width: 110px;
-    }
-
-    /* スキャンボタン */
-    .scan-btn {
-      width: 100%;
-      padding: 18px;
-      background: var(--primary);
-      color: #fff;
+    /* ボタン */
+    .btn {
+      padding: 14px 20px;
       border: none;
       border-radius: var(--radius);
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -169,494 +123,689 @@
       gap: 10px;
       transition: background 0.15s, transform 0.1s;
       -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      width: 100%;
     }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+    .btn-primary:active { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: #fff; box-shadow: 0 4px 14px rgba(22,163,74,0.3); }
+    .btn-ghost   { background: var(--bg); color: var(--text); border: 1.5px solid var(--border); box-shadow: none; font-size: 14px; padding: 10px 16px; }
+    .btn-icon { font-size: 20px; }
 
-    .scan-btn:active {
-      background: var(--primary-dark);
-      transform: scale(0.98);
-    }
-
-    .scan-btn .btn-icon {
-      font-size: 22px;
-    }
-
-    /* 結果エリア */
-    .result-area {
-      min-height: 80px;
-    }
-
-    /* 空状態 */
-    .empty-state {
+    /* ステップインジケーター */
+    .step-bar {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px 16px;
-      color: var(--muted);
       gap: 8px;
+      padding: 14px 16px;
     }
-
-    .empty-state .empty-icon {
-      font-size: 40px;
-      opacity: 0.4;
-    }
-
-    .empty-state p {
-      font-size: 14px;
-    }
-
-    /* 最新読み取り結果 */
-    .latest-result {
-      padding: 16px;
-    }
-
-    .result-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
+    .step-dot {
+      width: 10px; height: 10px;
       border-radius: 50%;
-      flex-shrink: 0;
+      background: var(--border);
+      transition: background 0.2s;
     }
+    .step-dot.active { background: var(--primary); }
+    .step-dot.done   { background: var(--success); }
+    .step-line { flex: 1; max-width: 40px; height: 2px; background: var(--border); }
 
-    .status-dot.success { background: var(--success); }
-    .status-dot.error   { background: var(--error); }
-
-    .result-codes {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* ステップカード */
+    .step-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--primary);
+      padding: 20px 16px;
+      text-align: center;
     }
+    .step-card.success-card { border-color: var(--success); }
+    .step-num  { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .step-num.success-num { color: var(--success); }
+    .step-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step-sub   { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
 
-    .code-item {
-      background: var(--primary-light);
+    /* 確認済みアイテム */
+    .confirmed-item {
+      background: var(--success-light);
       border-radius: 8px;
       padding: 12px 14px;
       display: flex;
       align-items: flex-start;
       gap: 10px;
+      margin-bottom: 14px;
+      text-align: left;
     }
+    .confirmed-item .ci-icon { font-size: 20px; flex-shrink: 0; }
+    .confirmed-item .ci-body {}
+    .confirmed-item .ci-title { font-size: 14px; font-weight: 700; color: var(--success); }
+    .confirmed-item .ci-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    .code-item.error-item {
-      background: var(--error-light);
+    /* 結果 */
+    .result-box {
+      background: var(--success-light);
+      border-radius: var(--radius);
+      border: 1.5px solid #86efac;
+      padding: 20px 16px;
+      text-align: center;
     }
+    .result-box .result-icon  { font-size: 48px; margin-bottom: 10px; }
+    .result-box .result-title { font-size: 18px; font-weight: 800; color: var(--success); margin-bottom: 8px; }
+    .result-box .result-body  { font-size: 14px; color: var(--text); line-height: 1.6; }
+    .result-box.error-box  { background: var(--error-light); border-color: #fca5a5; }
+    .result-box.error-box .result-title { color: var(--error); }
 
-    .code-badge {
-      background: var(--primary);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 20px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .code-badge.error-badge {
-      background: var(--error);
-    }
-
-    .code-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--primary-dark);
-      word-break: break-all;
-      letter-spacing: 0.05em;
-    }
-
-    .code-value.error-value {
-      color: var(--error);
-    }
-
-    .code-meta {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* エラーバナー */
-    .error-banner {
-      background: var(--error-light);
-      border: 1px solid #fca5a5;
+    /* 環境エラーバナー */
+    .env-error {
+      background: var(--warn-light);
+      border: 1px solid #fcd34d;
       border-radius: var(--radius);
       padding: 14px 16px;
       display: flex;
       align-items: flex-start;
       gap: 10px;
       font-size: 14px;
-      color: var(--error);
     }
 
-    .error-banner .err-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    /* ローディングスピナー */
+    /* ローディングオーバーレイ */
     .loading-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.45);
       z-index: 999;
       align-items: center;
       justify-content: center;
       flex-direction: column;
       gap: 14px;
     }
-
-    .loading-overlay.show {
-      display: flex;
-    }
-
+    .loading-overlay.show { display: flex; }
     .spinner {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border: 4px solid rgba(255,255,255,0.3);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
+    .loading-text { color: #fff; font-size: 15px; font-weight: 600; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .loading-text {
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
+    /* 設定モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: flex-end;
+      justify-content: center;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .modal-overlay.show { display: flex; }
+    .settings-sheet {
+      background: var(--card);
+      border-radius: 16px 16px 0 0;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      width: 100%;
+      max-width: 600px;
+    }
+    .settings-sheet h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .option-row:last-child { border-bottom: none; }
+    .option-label { font-size: 15px; font-weight: 500; }
+    .option-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 28px 6px 10px;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      min-width: 110px;
     }
 
     /* フェードイン */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.25s ease;
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
   </style>
 </head>
 <body>
 
 <header>
-  <span class="icon">📷</span>
-  <h1>カメレオンコードリーダー</h1>
-  <a href="admin.html" class="logout-btn" style="text-decoration:none;margin-right:6px;">管理</a>
-  <button class="logout-btn" onclick="doLogout()" title="ログアウト">ログアウト</button>
+  <span style="font-size:22px;">📦</span>
+  <h1 id="headerTitle">入出庫デモ</h1>
+  <button class="header-btn" onclick="openSettings()" id="settingsBtn">⚙️</button>
+  <a href="admin.html" class="header-btn" style="text-decoration:none;">管理</a>
+  <button class="header-btn" onclick="doLogout()">ログアウト</button>
 </header>
 
-<main>
+<!-- ======================== メニュー画面 ======================== -->
+<div class="screen active" id="screenMenu">
+  <main>
+    <div id="envErrorBanner" style="display:none;" class="env-error">
+      ⚠️ <div>このページは <strong>IroatoReader</strong> アプリ上でご利用ください。通常ブラウザでは動作しません。</div>
+    </div>
 
-  <!-- エラーバナー（IroatoReader 未対応環境用） -->
-  <div class="error-banner" id="envError" style="display:none;">
-    <span class="err-icon">⚠️</span>
-    <div>
-      このページは <strong>IroatoReader</strong> アプリ上でご利用ください。<br>
-      通常のブラウザでは動作しません。
+    <div class="menu-grid">
+      <div class="menu-card primary-card" onclick="showScreen('screenProductBind')">
+        <div class="menu-icon">🏷️</div>
+        <div class="menu-title">製品紐付</div>
+        <div class="menu-sub">QR→CC を紐づける</div>
+      </div>
+      <div class="menu-card primary-card" onclick="showScreen('screenLocationBind')">
+        <div class="menu-icon">📍</div>
+        <div class="menu-title">ロケーション紐付</div>
+        <div class="menu-sub">製品を場所に紐づける</div>
+      </div>
+      <div class="menu-card disabled">
+        <div class="menu-icon">🔄</div>
+        <div class="menu-title">入出庫</div>
+        <span class="coming-badge">準備中</span>
+      </div>
+      <div class="menu-card disabled">
+        <div class="menu-icon">🛒</div>
+        <div class="menu-title">ピッキング</div>
+        <span class="coming-badge">準備中</span>
+      </div>
+    </div>
+
+    <!-- CC単体スキャン（既存機能） -->
+    <div class="card">
+      <div class="card-header"><h2>CCスキャン（単体）</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-ghost" onclick="startRawScan()">
+          <span class="btn-icon">🔍</span> カメレオンコードを読み取る
+        </button>
+        <div id="rawResultArea"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ======================== 製品紐付 画面 ======================== -->
+<div class="screen" id="screenProductBind">
+  <main>
+    <button class="btn btn-ghost" onclick="showScreen('screenMenu')" style="width:auto;padding:8px 16px;font-size:13px;margin-bottom:4px;">← メニューに戻る</button>
+
+    <!-- ステップインジケーター -->
+    <div class="step-bar">
+      <div class="step-dot active" id="pbDot1"></div>
+      <div class="step-line"></div>
+      <div class="step-dot" id="pbDot2"></div>
+    </div>
+
+    <div id="pbStep1">
+      <div class="step-card">
+        <div class="step-num">STEP 1 / 2</div>
+        <div class="step-title">製品QRコードをスキャン</div>
+        <div class="step-sub">管理画面で表示した製品のQRコードをスキャンしてください</div>
+        <button class="btn btn-primary" onclick="pbScanQR()">
+          <span class="btn-icon">📱</span> QRコードをスキャン
+        </button>
+      </div>
+    </div>
+
+    <div id="pbStep2" style="display:none;">
+      <div id="pbProductConfirm"></div>
+      <div class="step-card">
+        <div class="step-num">STEP 2 / 2</div>
+        <div class="step-title">CCをスキャン</div>
+        <div class="step-sub">製品に貼り付けるカメレオンコードを1つスキャンしてください</div>
+        <button class="btn btn-primary" onclick="pbScanCC()">
+          <span class="btn-icon">🔲</span> CCをスキャン
+        </button>
+      </div>
+      <button class="btn btn-ghost" onclick="pbReset()">最初からやり直す</button>
+    </div>
+
+    <div id="pbResult" style="display:none;"></div>
+  </main>
+</div>
+
+<!-- ======================== ロケーション紐付 画面 ======================== -->
+<div class="screen" id="screenLocationBind">
+  <main>
+    <button class="btn btn-ghost" onclick="showScreen('screenMenu')" style="width:auto;padding:8px 16px;font-size:13px;margin-bottom:4px;">← メニューに戻る</button>
+
+    <div class="step-bar">
+      <div class="step-dot active" id="lbDot1"></div>
+      <div class="step-line"></div>
+      <div class="step-dot" id="lbDot2"></div>
+    </div>
+
+    <div id="lbStep1">
+      <div class="step-card">
+        <div class="step-num">STEP 1 / 2</div>
+        <div class="step-title">製品のCCをスキャン</div>
+        <div class="step-sub">製品に紐づけたカメレオンコードをスキャンしてください</div>
+        <button class="btn btn-primary" onclick="lbScanProductCC()">
+          <span class="btn-icon">🔲</span> 製品CCをスキャン
+        </button>
+      </div>
+    </div>
+
+    <div id="lbStep2" style="display:none;">
+      <div id="lbProductConfirm"></div>
+      <div class="step-card">
+        <div class="step-num">STEP 2 / 2</div>
+        <div class="step-title">場所のCCをスキャン</div>
+        <div class="step-sub">ロケーション（棚・エリアなど）に設置したカメレオンコードをスキャンしてください</div>
+        <button class="btn btn-primary" onclick="lbScanLocationCC()">
+          <span class="btn-icon">🔲</span> 場所CCをスキャン
+        </button>
+      </div>
+      <button class="btn btn-ghost" onclick="lbReset()">最初からやり直す</button>
+    </div>
+
+    <div id="lbResult" style="display:none;"></div>
+  </main>
+</div>
+
+<!-- 設定シート -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="settings-sheet">
+    <h3>⚙️ スキャン設定</h3>
+    <div class="option-row">
+      <div><div class="option-label">読み取りモード</div><div class="option-sub">1コード / 複数コード</div></div>
+      <select id="optMode"><option value="multi">複数</option><option value="single">1コード</option></select>
+    </div>
+    <div class="option-row">
+      <div><div class="option-label">解析レベル</div><div class="option-sub">高いほど精度↑・速度↓</div></div>
+      <select id="optAnalyzeLevel">
+        <option value="1">1（最速）</option><option value="2">2</option><option value="3" selected>3（標準）</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        <option value="7">7</option><option value="8">8（最高精度）</option>
+      </select>
+    </div>
+    <div class="option-row">
+      <div><div class="option-label">解像度</div><div class="option-sub">カメラ解像度</div></div>
+      <select id="optResolution">
+        <option value="r640x480" selected>640×480</option>
+        <option value="r1280x720">1280×720</option>
+        <option value="r1920x1080">1920×1080</option>
+      </select>
+    </div>
+    <div class="option-row">
+      <div><div class="option-label">カメラ</div><div class="option-sub">背面 / 前面</div></div>
+      <select id="optCameraPos"><option value="back">背面</option><option value="front">前面</option></select>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeSettings()" style="font-size:15px;padding:12px;">閉じる</button>
     </div>
   </div>
-
-  <!-- オプション設定 -->
-  <div class="card">
-    <div class="card-header">
-      <h2>設定</h2>
-    </div>
-    <div class="card-body">
-      <div class="option-row">
-        <div>
-          <div class="option-label">読み取りモード</div>
-          <div class="option-sub">1コード / 複数コード</div>
-        </div>
-        <select id="optMode">
-          <option value="multi">複数</option>
-          <option value="single">1コード</option>
-        </select>
-      </div>
-      <div class="option-row">
-        <div>
-          <div class="option-label">解析レベル</div>
-          <div class="option-sub">高いほど精度↑・速度↓</div>
-        </div>
-        <select id="optAnalyzeLevel">
-          <option value="1">1（最速）</option>
-          <option value="2">2</option>
-          <option value="3" selected>3（標準）</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8（最高精度）</option>
-        </select>
-      </div>
-      <div class="option-row">
-        <div>
-          <div class="option-label">解像度</div>
-          <div class="option-sub">カメラ解像度</div>
-        </div>
-        <select id="optResolution">
-          <option value="r640x480" selected>640×480</option>
-          <option value="r1280x720">1280×720</option>
-          <option value="r1920x1080">1920×1080</option>
-        </select>
-      </div>
-      <div class="option-row">
-        <div>
-          <div class="option-label">カメラ</div>
-          <div class="option-sub">背面 / 前面</div>
-        </div>
-        <select id="optCameraPos">
-          <option value="back">背面</option>
-          <option value="front">前面</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- スキャンボタン -->
-  <button class="scan-btn" id="scanBtn" onclick="startScan()">
-    <span class="btn-icon">🔍</span>
-    カメレオンコードを読み取る
-  </button>
-
-  <!-- 最新読み取り結果 -->
-  <div class="card">
-    <div class="card-header">
-      <h2>読み取り結果</h2>
-    </div>
-    <div id="resultArea" class="result-area">
-      <div class="empty-state">
-        <span class="empty-icon">🔲</span>
-        <p>まだ読み取りが行われていません</p>
-      </div>
-    </div>
-  </div>
-
-
-</main>
+</div>
 
 <!-- ローディングオーバーレイ -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-text">カメラを起動中…</div>
+  <div class="loading-text" id="loadingText">カメラを起動中…</div>
 </div>
 
 <script>
-  // ==================================================
-  // 認証チェック（未ログインならログイン画面へ）
-  // ==================================================
+  // =====================================================
+  // 認証チェック
+  // =====================================================
   (function () {
-    if (sessionStorage.getItem('cc_auth') !== '1') {
-      location.replace('login.html');
-    }
+    if (sessionStorage.getItem('cc_auth') !== '1') location.replace('login.html');
   })();
 
-  // ==================================================
-  // ログアウト
-  // ==================================================
   function doLogout() {
     sessionStorage.removeItem('cc_auth');
     location.replace('login.html');
   }
 
-  // ==================================================
-  // IroatoReader 動作環境チェック
-  // ==================================================
-  function isIroatoReaderEnv() {
-    return typeof IroatoReader !== 'undefined';
-  }
+  // =====================================================
+  // 環境チェック
+  // =====================================================
+  function isIroatoReaderEnv() { return typeof IroatoReader !== 'undefined'; }
 
   window.addEventListener('DOMContentLoaded', function () {
     if (!isIroatoReaderEnv()) {
-      document.getElementById('envError').style.display = 'flex';
+      document.getElementById('envErrorBanner').style.display = 'flex';
     }
   });
 
-  // ==================================================
-  // オプション取得
-  // ==================================================
-  function getOptions() {
-    var modeVal    = document.getElementById('optMode').value;
-    var levelVal   = parseInt(document.getElementById('optAnalyzeLevel').value, 10);
-    var resVal     = document.getElementById('optResolution').value;
-    var camPosVal  = document.getElementById('optCameraPos').value;
+  // =====================================================
+  // 画面切替
+  // =====================================================
+  var screens = ['screenMenu', 'screenProductBind', 'screenLocationBind'];
+  var screenTitles = {
+    screenMenu:         '入出庫デモ',
+    screenProductBind:  '製品紐付',
+    screenLocationBind: 'ロケーション紐付'
+  };
 
-    // IroatoReader の定数マッピング
-    var modeMap = {
-      'multi':  IroatoReader.multi,
-      'single': IroatoReader.single
-    };
-    var resMap = {
-      'r640x480':   IroatoReader.r640x480,
-      'r1280x720':  IroatoReader.r1280x720,
-      'r1920x1080': IroatoReader.r1920x1080
-    };
-    var camPosMap = {
-      'back':  IroatoReader.back,
-      'front': IroatoReader.front
-    };
+  function showScreen(id) {
+    screens.forEach(function (s) {
+      document.getElementById(s).classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+    document.getElementById('headerTitle').textContent = screenTitles[id] || '入出庫デモ';
+    window.scrollTo(0, 0);
 
+    // 画面を開く際に状態リセット
+    if (id === 'screenProductBind') pbReset();
+    if (id === 'screenLocationBind') lbReset();
+  }
+
+  // =====================================================
+  // IroatoReader オプション取得
+  // =====================================================
+  function getCCOptions(singleMode) {
+    var level  = parseInt(document.getElementById('optAnalyzeLevel').value, 10);
+    var resVal = document.getElementById('optResolution').value;
+    var camVal = document.getElementById('optCameraPos').value;
+    var resMap = { 'r640x480': IroatoReader.r640x480, 'r1280x720': IroatoReader.r1280x720, 'r1920x1080': IroatoReader.r1920x1080 };
+    var camMap = { 'back': IroatoReader.back, 'front': IroatoReader.front };
     return {
-      mode:           modeMap[modeVal],
-      analyzeLevel:   levelVal,
+      mode:           singleMode ? IroatoReader.single : IroatoReader.multi,
+      analyzeLevel:   level,
       resolution:     resMap[resVal],
-      cameraPosition: camPosMap[camPosVal],
+      cameraPosition: camMap[camVal],
       lineColor:      IroatoReader.green,
       errLineColor:   IroatoReader.red,
       buttonText:     '完了',
-      labelText:      'カメレオンコードを枠内に合わせてください'
+      labelText:      'カメレオンコードを1つ枠内に合わせてください'
     };
   }
 
-  // ==================================================
-  // スキャン開始
-  // ==================================================
-  function startScan() {
-    if (!isIroatoReaderEnv()) {
-      alert('IroatoReader アプリ上でのみ使用できます。');
-      return;
-    }
+  function getQROptions() {
+    var resVal = document.getElementById('optResolution').value;
+    var camVal = document.getElementById('optCameraPos').value;
+    var resMap = { 'r640x480': IroatoReader.r640x480, 'r1280x720': IroatoReader.r1280x720, 'r1920x1080': IroatoReader.r1920x1080 };
+    var camMap = { 'back': IroatoReader.back, 'front': IroatoReader.front };
+    return {
+      mode:           IroatoReader.single,
+      resolution:     resMap[resVal],
+      cameraPosition: camMap[camVal],
+      buttonText:     '完了',
+      labelText:      '製品のQRコードを枠内に合わせてください'
+    };
+  }
 
-    showLoading(true);
+  // CCスキャン共通ラッパー（Promise）
+  function scanCC(singleMode) {
+    return new Promise(function (resolve, reject) {
+      if (!isIroatoReaderEnv()) { reject(new Error('IroatoReaderアプリで開いてください')); return; }
+      showLoading('カメラを起動中…');
+      try {
+        var reader = new IroatoReader('cc', getCCOptions(singleMode !== false));
+        reader.read(function (res) {
+          hideLoading();
+          if (res == null || (!res.status && res.data == null)) { resolve(null); return; }
+          var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
+          if (res.status && codes.length > 0) {
+            // codes[0].code がCCID
+            resolve(codes[0].code != null ? String(codes[0].code) : null);
+          } else {
+            resolve(null);
+          }
+        });
+      } catch (e) { hideLoading(); reject(e); }
+    });
+  }
 
-    try {
-      var opts = getOptions();
-      var reader = new IroatoReader('cc', opts);
+  // QRスキャン共通ラッパー（Promise）
+  function scanQR() {
+    return new Promise(function (resolve, reject) {
+      if (!isIroatoReaderEnv()) { reject(new Error('IroatoReaderアプリで開いてください')); return; }
+      showLoading('カメラを起動中…');
+      try {
+        var reader = new IroatoReader('qr', getQROptions());
+        reader.read(function (res) {
+          hideLoading();
+          if (res == null || (!res.status && res.data == null)) { resolve(null); return; }
+          var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
+          if (res.status && codes.length > 0) {
+            // QRコードの値は codes[0].code に入ると想定
+            resolve(codes[0].code != null ? String(codes[0].code) : null);
+          } else {
+            resolve(null);
+          }
+        });
+      } catch (e) { hideLoading(); reject(e); }
+    });
+  }
 
-      reader.read(function (res) {
-        showLoading(false);
-        handleResult(res);
+  // =====================================================
+  // CCスキャン（単体・既存機能）
+  // =====================================================
+  function startRawScan() {
+    scanCC(false).then(function (ccId) {
+      if (ccId == null) { document.getElementById('rawResultArea').innerHTML = ''; return; }
+      document.getElementById('rawResultArea').innerHTML =
+        '<div style="margin-top:8px;background:var(--primary-light);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--primary-dark);">CCID: ' + escHtml(ccId) + '</div>';
+    }).catch(function (e) {
+      document.getElementById('rawResultArea').innerHTML =
+        '<div style="margin-top:8px;font-size:13px;color:var(--error);">⚠️ ' + escHtml(e.message) + '</div>';
+    });
+  }
+
+  // =====================================================
+  // 製品紐付 フロー
+  // =====================================================
+  var pbProduct = null; // 製品マスタのドキュメント
+
+  function pbReset() {
+    pbProduct = null;
+    document.getElementById('pbStep1').style.display = 'block';
+    document.getElementById('pbStep2').style.display = 'none';
+    document.getElementById('pbResult').style.display = 'none';
+    document.getElementById('pbProductConfirm').innerHTML = '';
+    document.getElementById('pbDot1').className = 'step-dot active';
+    document.getElementById('pbDot2').className = 'step-dot';
+  }
+
+  function pbScanQR() {
+    scanQR().then(function (qrValue) {
+      if (!qrValue) return; // キャンセル
+      showLoading('製品を検索中…');
+      return getProductByCode(qrValue).then(function (product) {
+        hideLoading();
+        if (!product) {
+          showStepError('pbStep1', '製品コード「' + escHtml(qrValue) + '」が見つかりませんでした。<br>管理画面で製品を登録してください。');
+          return;
+        }
+        pbProduct = product;
+        // 確認表示
+        var warnMsg = product.cc_id
+          ? '<div style="font-size:12px;color:var(--warn);margin-top:6px;">⚠️ 現在 CC: ' + escHtml(product.cc_id) + ' が紐づいています。上書きされます。</div>'
+          : '';
+        document.getElementById('pbProductConfirm').innerHTML =
+          '<div class="confirmed-item fade-in"><div class="ci-icon">✅</div><div class="ci-body">' +
+          '<div class="ci-title">' + escHtml(product.product_name) + '</div>' +
+          '<div class="ci-sub">コード: ' + escHtml(product.product_code) + (product.description ? ' | ' + escHtml(product.description) : '') + '</div>' +
+          warnMsg + '</div></div>';
+        // ステップ切替
+        document.getElementById('pbDot1').className = 'step-dot done';
+        document.getElementById('pbDot2').className = 'step-dot active';
+        document.getElementById('pbStep1').style.display = 'none';
+        document.getElementById('pbStep2').style.display = 'block';
       });
-    } catch (e) {
-      showLoading(false);
-      showFatalError('IroatoReader の起動に失敗しました: ' + e.message);
-    }
+    }).catch(function (e) {
+      hideLoading();
+      showStepError('pbStep1', e.message);
+    });
   }
 
-  // ==================================================
-  // 結果処理
-  // ==================================================
-  function handleResult(res) {
-    try {
-      var now = new Date();
-      var timeStr = formatTime(now);
-
-      // res が null/undefined → キャンセル扱い（何もしない）
-      if (res == null) {
-        return;
-      }
-
-      // status=false かつ data なし → キャンセル扱い（何もしない）
-      if (!res.status && (res.data == null)) {
-        return;
-      }
-
-      var codes = (res.data && Array.isArray(res.data.codes)) ? res.data.codes : [];
-
-      if (res.status && codes.length > 0) {
-        // ✅ 読み取り成功
-        renderResultSuccess(codes, timeStr);
-      } else if (res.status && codes.length === 0) {
-        // ⚠️ カメラは起動したがコードなしで完了
-        renderResultError(timeStr);
-      }
-      // status=false は上でキャンセルとして処理済み
-
-    } catch (e) {
-      // 予期しないエラーはコンソールにのみ出力し、UI は壊さない
-      console.error('handleResult error:', e);
-    }
+  function pbScanCC() {
+    if (!pbProduct) return;
+    scanCC(true).then(function (ccId) {
+      if (!ccId) return; // キャンセル
+      showLoading('紐付け処理中…');
+      return bindProductCC(pbProduct.id, ccId).then(function () {
+        hideLoading();
+        document.getElementById('pbDot2').className = 'step-dot done';
+        document.getElementById('pbStep2').style.display = 'none';
+        document.getElementById('pbResult').style.display = 'block';
+        document.getElementById('pbResult').innerHTML =
+          '<div class="result-box fade-in">' +
+          '<div class="result-icon">✅</div>' +
+          '<div class="result-title">紐付け完了！</div>' +
+          '<div class="result-body">製品「' + escHtml(pbProduct.product_name) + '」に<br>CC: <strong>' + escHtml(ccId) + '</strong><br>を紐づけました。</div>' +
+          '</div>' +
+          '<button class="btn btn-ghost" onclick="pbReset()" style="margin-top:12px;">続けて紐付けする</button>';
+      });
+    }).catch(function (e) {
+      hideLoading();
+      document.getElementById('pbResult').style.display = 'block';
+      document.getElementById('pbResult').innerHTML =
+        '<div class="result-box error-box fade-in">' +
+        '<div class="result-icon">❌</div>' +
+        '<div class="result-title">エラー</div>' +
+        '<div class="result-body">' + escHtml(e.message) + '</div>' +
+        '</div>' +
+        '<button class="btn btn-ghost" onclick="pbReset()" style="margin-top:12px;">最初からやり直す</button>';
+    });
   }
 
-  // ==================================================
-  // 結果描画（成功）
-  // ==================================================
-  function renderResultSuccess(codes, timeStr) {
-    var html = '<div class="latest-result fade-in">';
-    html += '<div class="result-status"><span class="status-dot success"></span>読み取り成功 ― ' + timeStr + '</div>';
-    html += '<div class="result-codes">';
-
-    for (var i = 0; i < codes.length; i++) {
-      var c = codes[i];
-      html += '<div class="code-item">';
-      html += '<span class="code-badge">CC</span>';
-      html += '<div>';
-      html += '<div class="code-value">' + escHtml(c.code) + '</div>';
-      html += '<div class="code-meta">座標: (' + Math.round(c.centerX) + ', ' + Math.round(c.centerY) + ')'
-            + ' &nbsp;|&nbsp; 日時: ' + escHtml(c.datetime) + '</div>';
-      html += '</div>';
-      html += '</div>';
-    }
-
-    html += '</div></div>';
-    document.getElementById('resultArea').innerHTML = html;
+  function showStepError(stepId, msg) {
+    var el = document.getElementById(stepId);
+    var existing = el.querySelector('.step-error');
+    if (existing) existing.remove();
+    var div = document.createElement('div');
+    div.className = 'step-error';
+    div.style.cssText = 'margin-top:10px;background:var(--error-light);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--error);';
+    div.innerHTML = '❌ ' + msg;
+    el.appendChild(div);
   }
 
-  // ==================================================
-  // 結果描画（失敗）
-  // ==================================================
-  function renderResultError(timeStr) {
-    var html = '<div class="latest-result fade-in">';
-    html += '<div class="result-status"><span class="status-dot error"></span>読み取り失敗 ― ' + timeStr + '</div>';
-    html += '<div class="result-codes">';
-    html += '<div class="code-item error-item">';
-    html += '<span class="code-badge error-badge">NG</span>';
-    html += '<div>';
-    html += '<div class="code-value error-value">コードを認識できませんでした</div>';
-    html += '<div class="code-meta">再度スキャンしてください</div>';
-    html += '</div>';
-    html += '</div>';
-    html += '</div></div>';
-    document.getElementById('resultArea').innerHTML = html;
+  // =====================================================
+  // ロケーション紐付 フロー
+  // =====================================================
+  var lbProduct  = null;
+  var lbLocation = null;
+
+  function lbReset() {
+    lbProduct  = null;
+    lbLocation = null;
+    document.getElementById('lbStep1').style.display = 'block';
+    document.getElementById('lbStep2').style.display = 'none';
+    document.getElementById('lbResult').style.display = 'none';
+    document.getElementById('lbProductConfirm').innerHTML = '';
+    document.getElementById('lbDot1').className = 'step-dot active';
+    document.getElementById('lbDot2').className = 'step-dot';
   }
 
-  // ==================================================
-  // 致命的エラー表示
-  // ==================================================
-  function showFatalError(msg) {
-    document.getElementById('resultArea').innerHTML =
-      '<div class="error-banner" style="margin:16px;"><span class="err-icon">⚠️</span><div>' + escHtml(msg) + '</div></div>';
+  function lbScanProductCC() {
+    scanCC(true).then(function (ccId) {
+      if (!ccId) return;
+      showLoading('製品を検索中…');
+      return getProductByCCId(ccId).then(function (product) {
+        hideLoading();
+        if (!product) {
+          showStepError('lbStep1', 'CC「' + escHtml(ccId) + '」に紐づく製品が見つかりませんでした。<br>先に「製品紐付」を行ってください。');
+          return;
+        }
+        lbProduct = product;
+        var currentLoc = product.current_location_name
+          ? '<div style="font-size:12px;color:var(--warn);margin-top:6px;">現在の場所: ' + escHtml(product.current_location_name) + '</div>'
+          : '';
+        document.getElementById('lbProductConfirm').innerHTML =
+          '<div class="confirmed-item fade-in"><div class="ci-icon">✅</div><div class="ci-body">' +
+          '<div class="ci-title">' + escHtml(product.product_name) + '</div>' +
+          '<div class="ci-sub">コード: ' + escHtml(product.product_code) + ' | CC: ' + escHtml(ccId) + '</div>' +
+          currentLoc + '</div></div>';
+        document.getElementById('lbDot1').className = 'step-dot done';
+        document.getElementById('lbDot2').className = 'step-dot active';
+        document.getElementById('lbStep1').style.display = 'none';
+        document.getElementById('lbStep2').style.display = 'block';
+      });
+    }).catch(function (e) {
+      hideLoading();
+      showStepError('lbStep1', e.message);
+    });
   }
 
-  // ==================================================
-  // ローディング制御
-  // ==================================================
-  function showLoading(show) {
-    var el = document.getElementById('loadingOverlay');
-    if (show) {
-      el.classList.add('show');
-    } else {
-      el.classList.remove('show');
-    }
+  function lbScanLocationCC() {
+    if (!lbProduct) return;
+    scanCC(true).then(function (ccId) {
+      if (!ccId) return;
+      showLoading('場所を検索中…');
+      return getLocationByCCId(ccId).then(function (location) {
+        if (!location) {
+          hideLoading();
+          document.getElementById('lbResult').style.display = 'block';
+          document.getElementById('lbResult').innerHTML =
+            '<div class="result-box error-box fade-in">' +
+            '<div class="result-icon">❌</div>' +
+            '<div class="result-title">場所が見つかりません</div>' +
+            '<div class="result-body">CC「' + escHtml(ccId) + '」に紐づく場所が登録されていません。<br>管理画面で場所マスタを登録してください。</div>' +
+            '</div>' +
+            '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">最初からやり直す</button>';
+          return;
+        }
+        return bindProductLocation(lbProduct.id, location.id, location.location_code, location.location_name, location.cc_id)
+          .then(function () {
+            hideLoading();
+            document.getElementById('lbDot2').className = 'step-dot done';
+            document.getElementById('lbStep2').style.display = 'none';
+            document.getElementById('lbResult').style.display = 'block';
+            document.getElementById('lbResult').innerHTML =
+              '<div class="result-box fade-in">' +
+              '<div class="result-icon">✅</div>' +
+              '<div class="result-title">ロケーション紐付完了！</div>' +
+              '<div class="result-body">製品「' + escHtml(lbProduct.product_name) + '」を<br>場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
+              '</div>' +
+              '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">続けて紐付けする</button>';
+          });
+      });
+    }).catch(function (e) {
+      hideLoading();
+      document.getElementById('lbResult').style.display = 'block';
+      document.getElementById('lbResult').innerHTML =
+        '<div class="result-box error-box fade-in">' +
+        '<div class="result-icon">❌</div>' +
+        '<div class="result-title">エラー</div>' +
+        '<div class="result-body">' + escHtml(e.message) + '</div>' +
+        '</div>' +
+        '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">最初からやり直す</button>';
+    });
   }
 
-  // ==================================================
+  // =====================================================
+  // 設定シート
+  // =====================================================
+  function openSettings()  { document.getElementById('settingsModal').classList.add('show'); }
+  function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+  document.getElementById('settingsModal').addEventListener('click', function (e) {
+    if (e.target === this) closeSettings();
+  });
+
+  // =====================================================
+  // ローディング
+  // =====================================================
+  function showLoading(msg) {
+    document.getElementById('loadingText').textContent = msg || 'しばらくお待ちください…';
+    document.getElementById('loadingOverlay').classList.add('show');
+  }
+  function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('show');
+  }
+
+  // =====================================================
   // ユーティリティ
-  // ==================================================
-  function formatTime(d) {
-    var pad = function (n) { return ('0' + n).slice(-2); };
-    return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate())
-         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  }
-
+  // =====================================================
   function escHtml(str) {
     if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 </body>
 </html>

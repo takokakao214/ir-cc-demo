@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>ユーザー管理 — カメレオンコードリーダー</title>
-
+  <title>管理画面 — 入出庫デモ</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -23,9 +22,7 @@
       --border: #e2e8f0;
       --radius: 12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
       background: var(--bg);
@@ -42,10 +39,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
     header h1 { font-size: 17px; font-weight: 700; flex: 1; }
-
     .back-btn {
       background: rgba(255,255,255,0.2);
       color: #fff;
@@ -59,24 +57,44 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* メイン */
-    main {
-      padding: 16px;
+    /* タブバー */
+    .tab-bar {
       display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-width: 600px;
-      margin: 0 auto;
+      background: var(--card);
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      position: sticky;
+      top: calc(55px + env(safe-area-inset-top));
+      z-index: 99;
     }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 13px 8px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
+    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* メイン */
+    main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 600px; margin: 0 auto; }
 
     /* カード */
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
     .card-header {
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
@@ -84,24 +102,32 @@
       align-items: center;
       justify-content: space-between;
     }
-
-    .card-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
+    .card-header h2 { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
     .card-body { padding: 16px; }
 
     /* フォーム */
-    .form-row {
-      display: flex;
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 10px;
     }
-
+    .form-grid.cols1 { grid-template-columns: 1fr; }
+    .form-grid input, .form-grid textarea {
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-grid input:focus, .form-grid textarea:focus { border-color: var(--primary); }
+    .form-grid textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .form-row input {
       flex: 1;
       padding: 10px 12px;
@@ -115,9 +141,10 @@
       transition: border-color 0.15s;
       min-width: 0;
     }
-
     .form-row input:focus { border-color: var(--primary); }
+    .form-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
 
+    /* ボタン */
     .btn {
       padding: 10px 16px;
       border: none;
@@ -131,18 +158,14 @@
     }
     .btn:active { transform: scale(0.97); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-danger  { background: var(--error);   color: #fff; }
     .btn-warn    { background: var(--warn);     color: #fff; }
     .btn-success { background: var(--success);  color: #fff; }
-    .btn-ghost {
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
+    .btn-ghost   { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
 
-    /* トースト通知 */
+    /* トースト */
     .toast {
       position: fixed;
       bottom: calc(24px + env(safe-area-inset-bottom));
@@ -159,79 +182,51 @@
       transition: transform 0.3s ease, opacity 0.3s ease;
       opacity: 0;
     }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.error-toast { background: var(--error); }
 
-    /* ユーザーリスト */
-    .user-list { display: flex; flex-direction: column; }
-
-    .user-item {
+    /* リストアイテム（共通） */
+    .list-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       padding: 12px 16px;
       gap: 12px;
       border-bottom: 1px solid var(--border);
     }
-    .user-item:last-child { border-bottom: none; }
-
-    .user-avatar {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      background: var(--primary-light);
-      color: var(--primary);
-      font-size: 16px;
-      font-weight: 700;
+    .list-item:last-child { border-bottom: none; }
+    .item-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
       flex-shrink: 0;
     }
-    .user-avatar.inactive {
-      background: var(--border);
-      color: var(--muted);
-    }
-
-    .user-info { flex: 1; min-width: 0; }
-
-    .user-name {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .user-name.inactive { color: var(--muted); }
-
-    .user-meta {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .status-badge {
+    .item-icon.product  { background: var(--primary-light); }
+    .item-icon.location { background: #d1fae5; }
+    .item-icon.user     { background: var(--primary-light); }
+    .item-body { flex: 1; min-width: 0; }
+    .item-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .item-badge {
       font-size: 11px;
       font-weight: 700;
       padding: 2px 8px;
       border-radius: 20px;
       flex-shrink: 0;
+      align-self: center;
     }
-    .status-badge.active   { background: var(--success-light); color: var(--success); }
-    .status-badge.inactive { background: var(--border);        color: var(--muted); }
-
-    .user-actions {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
+    .badge-bound    { background: var(--success-light); color: var(--success); }
+    .badge-unbound  { background: var(--border);        color: var(--muted); }
+    .badge-active   { background: var(--success-light); color: var(--success); }
+    .badge-inactive { background: var(--border);        color: var(--muted); }
+    .item-actions { display: flex; gap: 6px; flex-shrink: 0; align-self: center; flex-wrap: wrap; justify-content: flex-end; }
     .icon-btn {
       width: 32px; height: 32px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--bg);
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
       transition: background 0.15s;
@@ -239,12 +234,7 @@
     .icon-btn:active { background: var(--border); }
 
     /* ローディング */
-    .loading-row {
-      padding: 32px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .loading-row { padding: 32px; text-align: center; color: var(--muted); font-size: 14px; }
 
     /* モーダル */
     .modal-overlay {
@@ -258,45 +248,58 @@
       padding: 20px;
     }
     .modal-overlay.show { display: flex; }
-
     .modal {
       background: var(--card);
       border-radius: var(--radius);
       padding: 24px;
       width: 100%;
-      max-width: 340px;
+      max-width: 360px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-height: 90vh;
+      overflow-y: auto;
     }
-
-    .modal h3 {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .modal p {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 18px;
-      line-height: 1.5;
-    }
-
-    .modal input {
+    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+    .modal p  { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal input, .modal textarea {
       width: 100%;
-      padding: 12px 14px;
+      padding: 11px 14px;
       border: 1.5px solid var(--border);
       border-radius: 8px;
-      font-size: 15px;
-      margin-bottom: 16px;
+      font-size: 14px;
+      margin-bottom: 10px;
       outline: none;
       -webkit-appearance: none;
+      font-family: inherit;
     }
-    .modal input:focus { border-color: var(--primary); }
+    .modal input:focus, .modal textarea:focus { border-color: var(--primary); }
+    .modal textarea { resize: vertical; min-height: 60px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+    .modal-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; display: block; }
 
-    .modal-btns {
+    /* QRコードモーダル */
+    #qrContainer {
       display: flex;
-      gap: 10px;
-      justify-content: flex-end;
+      justify-content: center;
+      margin: 16px 0;
+      padding: 16px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    #qrContainer canvas, #qrContainer img { display: block; }
+    .qr-info {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .qr-code-text {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
     }
 
     /* 管理者ロック画面 */
@@ -318,22 +321,9 @@
       max-width: 340px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     }
-    .lock-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .lock-sub {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 20px;
-    }
-    .lock-error {
-      font-size: 13px;
-      color: var(--error);
-      margin-bottom: 10px;
-      display: none;
-    }
+    .lock-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .lock-sub   { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+    .lock-error { font-size: 13px; color: var(--error); margin-bottom: 10px; display: none; }
     .lock-error.show { display: block; }
 
     @keyframes fadeIn {
@@ -354,9 +344,7 @@
     <input type="password" id="adminPwInput" placeholder="管理者パスワード"
            style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:15px;margin-bottom:14px;outline:none;-webkit-appearance:none;"
            onkeydown="if(event.key==='Enter')checkAdminPw()" />
-    <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="checkAdminPw()">
-      入室する
-    </button>
+    <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="checkAdminPw()">入室する</button>
     <div style="text-align:center;margin-top:14px;">
       <a href="cc_reader.html" style="font-size:13px;color:#64748b;text-decoration:none;">← リーダーに戻る</a>
     </div>
@@ -364,53 +352,121 @@
 </div>
 
 <header>
-  <span style="font-size:22px;">👥</span>
-  <h1>ユーザー管理</h1>
+  <span style="font-size:22px;">⚙️</span>
+  <h1>管理画面</h1>
   <a href="cc_reader.html" class="back-btn">← 戻る</a>
 </header>
 
-<main>
+<!-- タブバー -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabBtnUsers"     onclick="switchTab('users')">👥 ユーザー</button>
+  <button class="tab-btn"        id="tabBtnProducts"  onclick="switchTab('products')">📦 製品マスタ</button>
+  <button class="tab-btn"        id="tabBtnLocations" onclick="switchTab('locations')">📍 場所マスタ</button>
+</div>
 
-  <!-- ユーザー追加カード -->
-  <div class="card">
-    <div class="card-header">
-      <h2>ユーザー追加</h2>
-    </div>
-    <div class="card-body">
-      <div class="form-row">
-        <input type="text" id="newUsername" placeholder="ユーザー名"
-               autocapitalize="none" autocorrect="off" autocomplete="off" />
-        <input type="password" id="newPassword" placeholder="パスワード"
-               autocomplete="new-password" />
+<!-- ==================== ユーザータブ ==================== -->
+<div id="tabUsers" class="tab-content active">
+  <main>
+    <div class="card">
+      <div class="card-header"><h2>ユーザー追加</h2></div>
+      <div class="card-body">
+        <div class="form-row">
+          <input type="text"     id="newUsername" placeholder="ユーザー名" autocapitalize="none" autocorrect="off" autocomplete="off" />
+          <input type="password" id="newPassword" placeholder="パスワード" autocomplete="new-password" />
+        </div>
+        <button class="btn btn-primary" style="width:100%;" id="addUserBtn" onclick="handleAddUser()">＋ ユーザーを追加</button>
       </div>
-      <button class="btn btn-primary" style="width:100%;" id="addBtn" onclick="handleAddUser()">
-        ＋ ユーザーを追加
-      </button>
     </div>
-  </div>
-
-  <!-- ユーザー一覧カード -->
-  <div class="card">
-    <div class="card-header">
-      <h2>ユーザー一覧</h2>
-      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadUsers()">
-        🔄 更新
-      </button>
+    <div class="card">
+      <div class="card-header">
+        <h2>ユーザー一覧</h2>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadUsers()">🔄 更新</button>
+      </div>
+      <div id="userListArea"><div class="loading-row">読み込み中…</div></div>
     </div>
-    <div id="userListArea">
-      <div class="loading-row">読み込み中…</div>
+  </main>
+</div>
+
+<!-- ==================== 製品マスタタブ ==================== -->
+<div id="tabProducts" class="tab-content">
+  <main>
+    <div class="card">
+      <div class="card-header"><h2>製品追加</h2></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div>
+            <div class="form-label">製品コード *</div>
+            <input type="text" id="newProductCode" placeholder="例: PROD-001" autocapitalize="characters" autocorrect="off" autocomplete="off" />
+          </div>
+          <div>
+            <div class="form-label">製品名 *</div>
+            <input type="text" id="newProductName" placeholder="例: サンプル製品A" autocorrect="off" />
+          </div>
+        </div>
+        <div class="form-grid cols1">
+          <div>
+            <div class="form-label">説明（任意）</div>
+            <input type="text" id="newProductDesc" placeholder="備考・説明など" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" id="addProductBtn" onclick="handleAddProduct()">＋ 製品を追加</button>
+      </div>
     </div>
-  </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>製品一覧</h2>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadProducts()">🔄 更新</button>
+      </div>
+      <div id="productListArea"><div class="loading-row">読み込み中…</div></div>
+    </div>
+  </main>
+</div>
 
-</main>
+<!-- ==================== 場所マスタタブ ==================== -->
+<div id="tabLocations" class="tab-content">
+  <main>
+    <div class="card">
+      <div class="card-header"><h2>場所追加</h2></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div>
+            <div class="form-label">場所コード *</div>
+            <input type="text" id="newLocCode" placeholder="例: LOC-A1" autocapitalize="characters" autocorrect="off" autocomplete="off" />
+          </div>
+          <div>
+            <div class="form-label">場所名 *</div>
+            <input type="text" id="newLocName" placeholder="例: 棚A-1" autocorrect="off" />
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <div class="form-label">CCID *</div>
+            <input type="text" id="newLocCCID" placeholder="例: 12345" autocorrect="off" autocomplete="off" />
+          </div>
+          <div>
+            <div class="form-label">説明（任意）</div>
+            <input type="text" id="newLocDesc" placeholder="備考など" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" id="addLocBtn" onclick="handleAddLocation()">＋ 場所を追加</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>場所一覧</h2>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadLocations()">🔄 更新</button>
+      </div>
+      <div id="locationListArea"><div class="loading-row">読み込み中…</div></div>
+    </div>
+  </main>
+</div>
 
-<!-- パスワード変更モーダル -->
+<!-- ========== モーダル：ユーザーパスワード変更 ========== -->
 <div class="modal-overlay" id="changePwModal">
   <div class="modal">
     <h3>🔑 パスワード変更</h3>
     <p id="changePwTarget"></p>
-    <input type="password" id="newPwInput" placeholder="新しいパスワード"
-           autocomplete="new-password" />
+    <input type="password" id="newPwInput" placeholder="新しいパスワード" autocomplete="new-password" />
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('changePwModal')">キャンセル</button>
       <button class="btn btn-primary" id="changePwBtn" onclick="handleChangePassword()">変更する</button>
@@ -418,14 +474,89 @@
   </div>
 </div>
 
-<!-- 削除確認モーダル -->
-<div class="modal-overlay" id="deleteModal">
+<!-- ========== モーダル：ユーザー削除確認 ========== -->
+<div class="modal-overlay" id="deleteUserModal">
   <div class="modal">
     <h3>🗑️ ユーザー削除</h3>
-    <p id="deleteTarget"></p>
+    <p id="deleteUserTarget"></p>
     <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="closeModal('deleteModal')">キャンセル</button>
-      <button class="btn btn-danger" id="deleteConfirmBtn" onclick="handleDeleteUser()">削除する</button>
+      <button class="btn btn-ghost" onclick="closeModal('deleteUserModal')">キャンセル</button>
+      <button class="btn btn-danger" id="deleteUserConfirmBtn" onclick="handleDeleteUser()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== モーダル：QRコード表示 ========== -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal" style="max-width:300px;">
+    <h3>📱 製品QRコード</h3>
+    <div class="qr-info" id="qrProductName"></div>
+    <div id="qrContainer"></div>
+    <div class="qr-code-text" id="qrProductCode"></div>
+    <div class="modal-btns" style="justify-content:center;">
+      <button class="btn btn-ghost" onclick="closeModal('qrModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== モーダル：製品編集 ========== -->
+<div class="modal-overlay" id="editProductModal">
+  <div class="modal">
+    <h3>✏️ 製品編集</h3>
+    <input type="hidden" id="editProductDocId" />
+    <label class="modal-label">製品コード *</label>
+    <input type="text" id="editProductCode" autocapitalize="characters" autocorrect="off" autocomplete="off" />
+    <label class="modal-label">製品名 *</label>
+    <input type="text" id="editProductName" />
+    <label class="modal-label">説明</label>
+    <textarea id="editProductDesc" rows="2"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('editProductModal')">キャンセル</button>
+      <button class="btn btn-primary" id="saveProductBtn" onclick="handleUpdateProduct()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== モーダル：製品削除確認 ========== -->
+<div class="modal-overlay" id="deleteProductModal">
+  <div class="modal">
+    <h3>🗑️ 製品削除</h3>
+    <p id="deleteProductTarget"></p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('deleteProductModal')">キャンセル</button>
+      <button class="btn btn-danger" id="deleteProductConfirmBtn" onclick="handleDeleteProduct()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== モーダル：場所編集 ========== -->
+<div class="modal-overlay" id="editLocationModal">
+  <div class="modal">
+    <h3>✏️ 場所編集</h3>
+    <input type="hidden" id="editLocationDocId" />
+    <label class="modal-label">場所コード *</label>
+    <input type="text" id="editLocationCode" autocapitalize="characters" autocorrect="off" autocomplete="off" />
+    <label class="modal-label">場所名 *</label>
+    <input type="text" id="editLocationName" />
+    <label class="modal-label">CCID *</label>
+    <input type="text" id="editLocationCCID" autocorrect="off" autocomplete="off" />
+    <label class="modal-label">説明</label>
+    <textarea id="editLocationDesc" rows="2"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('editLocationModal')">キャンセル</button>
+      <button class="btn btn-primary" id="saveLocationBtn" onclick="handleUpdateLocation()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== モーダル：場所削除確認 ========== -->
+<div class="modal-overlay" id="deleteLocationModal">
+  <div class="modal">
+    <h3>🗑️ 場所削除</h3>
+    <p id="deleteLocationTarget"></p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('deleteLocationModal')">キャンセル</button>
+      <button class="btn btn-danger" id="deleteLocationConfirmBtn" onclick="handleDeleteLocation()">削除する</button>
     </div>
   </div>
 </div>
@@ -439,7 +570,6 @@
   // =====================================================
   var adminUnlocked = false;
   var pendingDocId  = null;
-  var pendingAction = null;
 
   function checkAdminPw() {
     var input = document.getElementById('adminPwInput').value;
@@ -453,81 +583,80 @@
       document.getElementById('adminPwInput').focus();
     }
   }
-
-  // Enter キーで認証
   document.getElementById('adminPwInput').focus();
 
   // =====================================================
-  // ユーザー一覧 読み込み
+  // タブ切り替え
+  // =====================================================
+  var activeTab = 'users';
+  var tabLoaded = { users: false, products: false, locations: false };
+
+  function switchTab(tab) {
+    document.getElementById('tabUsers').classList.remove('active');
+    document.getElementById('tabProducts').classList.remove('active');
+    document.getElementById('tabLocations').classList.remove('active');
+    document.getElementById('tabBtnUsers').classList.remove('active');
+    document.getElementById('tabBtnProducts').classList.remove('active');
+    document.getElementById('tabBtnLocations').classList.remove('active');
+
+    document.getElementById('tab' + capitalize(tab)).classList.add('active');
+    document.getElementById('tabBtn' + capitalize(tab)).classList.add('active');
+    activeTab = tab;
+
+    if (!tabLoaded[tab]) {
+      tabLoaded[tab] = true;
+      if (tab === 'users')     loadUsers();
+      if (tab === 'products')  loadProducts();
+      if (tab === 'locations') loadLocations();
+    }
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // =====================================================
+  // ユーザー管理
   // =====================================================
   function loadUsers() {
-    document.getElementById('userListArea').innerHTML =
-      '<div class="loading-row">読み込み中…</div>';
-
+    document.getElementById('userListArea').innerHTML = '<div class="loading-row">読み込み中…</div>';
     getUsers()
       .then(function (users) { renderUserList(users); })
       .catch(function (err) {
-        console.error(err);
         document.getElementById('userListArea').innerHTML =
           '<div class="loading-row" style="color:#dc2626;">読み込みエラー: ' + err.message + '</div>';
       });
   }
 
-  // =====================================================
-  // ユーザー一覧 描画
-  // =====================================================
   function renderUserList(users) {
     if (users.length === 0) {
-      document.getElementById('userListArea').innerHTML =
-        '<div class="loading-row">ユーザーが登録されていません</div>';
+      document.getElementById('userListArea').innerHTML = '<div class="loading-row">ユーザーが登録されていません</div>';
       return;
     }
-
-    var html = '<div class="user-list fade-in">';
+    var html = '<div class="fade-in">';
     users.forEach(function (u) {
       var initial = u.username ? u.username.charAt(0).toUpperCase() : '?';
-      var createdStr = u.createdAt
-        ? new Date(u.createdAt.toDate()).toLocaleDateString('ja-JP')
-        : '—';
-      html += '<div class="user-item">';
-      html += '<div class="user-avatar ' + (u.active ? '' : 'inactive') + '">' + escHtml(initial) + '</div>';
-      html += '<div class="user-info">';
-      html += '<div class="user-name ' + (u.active ? '' : 'inactive') + '">' + escHtml(u.username) + '</div>';
-      html += '<div class="user-meta">登録日: ' + createdStr + '</div>';
+      var createdStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('ja-JP') : '—';
+      html += '<div class="list-item">';
+      html += '<div class="item-icon user">' + escHtml(initial) + '</div>';
+      html += '<div class="item-body">';
+      html += '<div class="item-title' + (u.active ? '' : '" style="color:var(--muted)') + '">' + escHtml(u.username) + '</div>';
+      html += '<div class="item-sub">登録日: ' + createdStr + '</div>';
       html += '</div>';
-      html += '<span class="status-badge ' + (u.active ? 'active' : 'inactive') + '">'
-            + (u.active ? '有効' : '無効') + '</span>';
-      html += '<div class="user-actions">';
-      // 有効/無効トグル
-      html += '<button class="icon-btn" title="' + (u.active ? '無効にする' : '有効にする') + '"'
-            + ' onclick="handleToggle(\'' + u.id + '\',' + u.active + ')">'
-            + (u.active ? '🚫' : '✅') + '</button>';
-      // パスワード変更
-      html += '<button class="icon-btn" title="パスワード変更"'
-            + ' onclick="openChangePw(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">'
-            + '🔑</button>';
-      // 削除
-      html += '<button class="icon-btn" title="削除"'
-            + ' onclick="openDelete(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">'
-            + '🗑️</button>';
-      html += '</div>';
-      html += '</div>';
+      html += '<span class="item-badge ' + (u.active ? 'badge-active' : 'badge-inactive') + '">' + (u.active ? '有効' : '無効') + '</span>';
+      html += '<div class="item-actions">';
+      html += '<button class="icon-btn" title="' + (u.active ? '無効にする' : '有効にする') + '" onclick="handleToggle(\'' + u.id + '\',' + u.active + ')">' + (u.active ? '🚫' : '✅') + '</button>';
+      html += '<button class="icon-btn" title="パスワード変更" onclick="openChangePw(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">🔑</button>';
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteUser(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">🗑️</button>';
+      html += '</div></div>';
     });
     html += '</div>';
     document.getElementById('userListArea').innerHTML = html;
   }
 
-  // =====================================================
-  // ユーザー追加
-  // =====================================================
   function handleAddUser() {
     var username = document.getElementById('newUsername').value.trim();
     var password = document.getElementById('newPassword').value;
-    var btn = document.getElementById('addBtn');
-
-    btn.disabled = true;
-    btn.textContent = '追加中…';
-
+    var btn = document.getElementById('addUserBtn');
+    btn.disabled = true; btn.textContent = '追加中…';
     addUser(username, password)
       .then(function () {
         showToast('✅ ユーザー「' + username + '」を追加しました');
@@ -535,88 +664,263 @@
         document.getElementById('newPassword').value = '';
         loadUsers();
       })
-      .catch(function (err) {
-        showToast('❌ ' + err.message, true);
-      })
-      .finally(function () {
-        btn.disabled = false;
-        btn.textContent = '＋ ユーザーを追加';
-      });
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; btn.textContent = '＋ ユーザーを追加'; });
   }
 
-  // =====================================================
-  // 有効/無効 トグル
-  // =====================================================
   function handleToggle(docId, currentActive) {
     toggleUserActive(docId, !currentActive)
-      .then(function () {
-        showToast(currentActive ? '🚫 無効にしました' : '✅ 有効にしました');
-        loadUsers();
-      })
-      .catch(function (err) {
-        showToast('❌ ' + err.message, true);
-      });
+      .then(function () { showToast(currentActive ? '🚫 無効にしました' : '✅ 有効にしました'); loadUsers(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); });
   }
 
-  // =====================================================
-  // パスワード変更 モーダル
-  // =====================================================
   function openChangePw(docId, username) {
-    pendingDocId  = docId;
-    pendingAction = 'changePw';
-    document.getElementById('changePwTarget').textContent =
-      '「' + username + '」の新しいパスワードを入力してください';
+    pendingDocId = docId;
+    document.getElementById('changePwTarget').textContent = '「' + username + '」の新しいパスワードを入力してください';
     document.getElementById('newPwInput').value = '';
     document.getElementById('changePwModal').classList.add('show');
-    setTimeout(function () {
-      document.getElementById('newPwInput').focus();
-    }, 100);
+    setTimeout(function () { document.getElementById('newPwInput').focus(); }, 100);
   }
 
   function handleChangePassword() {
     var newPw = document.getElementById('newPwInput').value;
-    var btn   = document.getElementById('changePwBtn');
+    var btn = document.getElementById('changePwBtn');
     btn.disabled = true;
-
     changePassword(pendingDocId, newPw)
-      .then(function () {
-        closeModal('changePwModal');
-        showToast('🔑 パスワードを変更しました');
-      })
-      .catch(function (err) {
-        showToast('❌ ' + err.message, true);
-      })
-      .finally(function () {
-        btn.disabled = false;
-      });
+      .then(function () { closeModal('changePwModal'); showToast('🔑 パスワードを変更しました'); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
   }
 
-  // =====================================================
-  // 削除 モーダル
-  // =====================================================
-  function openDelete(docId, username) {
+  function openDeleteUser(docId, username) {
     pendingDocId = docId;
-    document.getElementById('deleteTarget').textContent =
-      '「' + username + '」を削除します。この操作は取り消せません。';
-    document.getElementById('deleteModal').classList.add('show');
+    document.getElementById('deleteUserTarget').textContent = '「' + username + '」を削除します。この操作は取り消せません。';
+    document.getElementById('deleteUserModal').classList.add('show');
   }
 
   function handleDeleteUser() {
-    var btn = document.getElementById('deleteConfirmBtn');
+    var btn = document.getElementById('deleteUserConfirmBtn');
     btn.disabled = true;
-
     deleteUser(pendingDocId)
-      .then(function () {
-        closeModal('deleteModal');
-        showToast('🗑️ ユーザーを削除しました');
-        loadUsers();
-      })
+      .then(function () { closeModal('deleteUserModal'); showToast('🗑️ ユーザーを削除しました'); loadUsers(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  // =====================================================
+  // 製品マスタ
+  // =====================================================
+  function loadProducts() {
+    document.getElementById('productListArea').innerHTML = '<div class="loading-row">読み込み中…</div>';
+    getProducts()
+      .then(function (products) { renderProductList(products); })
       .catch(function (err) {
-        showToast('❌ ' + err.message, true);
-      })
-      .finally(function () {
-        btn.disabled = false;
+        document.getElementById('productListArea').innerHTML =
+          '<div class="loading-row" style="color:#dc2626;">読み込みエラー: ' + err.message + '</div>';
       });
+  }
+
+  function renderProductList(products) {
+    if (products.length === 0) {
+      document.getElementById('productListArea').innerHTML = '<div class="loading-row">製品が登録されていません</div>';
+      return;
+    }
+    var html = '<div class="fade-in">';
+    products.forEach(function (p) {
+      var bound = p.cc_id ? true : false;
+      html += '<div class="list-item">';
+      html += '<div class="item-icon product">📦</div>';
+      html += '<div class="item-body">';
+      html += '<div class="item-title">' + escHtml(p.product_name) + '</div>';
+      html += '<div class="item-sub">コード: ' + escHtml(p.product_code);
+      if (p.description) html += ' &nbsp;|&nbsp; ' + escHtml(p.description);
+      if (bound) html += '<br>CC: <strong>' + escHtml(p.cc_id) + '</strong>';
+      if (p.current_location_name) html += ' &nbsp;|&nbsp; 場所: ' + escHtml(p.current_location_name);
+      html += '</div>';
+      html += '</div>';
+      html += '<span class="item-badge ' + (bound ? 'badge-bound' : 'badge-unbound') + '">' + (bound ? 'CC紐付済' : '未紐付') + '</span>';
+      html += '<div class="item-actions">';
+      html += '<button class="icon-btn" title="QR表示" onclick="openQRModal(\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\')">📱</button>';
+      html += '<button class="icon-btn" title="編集" onclick="openEditProduct(\'' + p.id + '\',\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\',\'' + escAttr(p.description || '') + '\')">✏️</button>';
+      if (bound) {
+        html += '<button class="icon-btn" title="CC紐付解除" onclick="handleUnbindCC(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')">🔗</button>';
+      }
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteProduct(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')">🗑️</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('productListArea').innerHTML = html;
+  }
+
+  function handleAddProduct() {
+    var code = document.getElementById('newProductCode').value.trim();
+    var name = document.getElementById('newProductName').value.trim();
+    var desc = document.getElementById('newProductDesc').value.trim();
+    var btn  = document.getElementById('addProductBtn');
+    btn.disabled = true; btn.textContent = '追加中…';
+    addProduct(code, name, desc)
+      .then(function () {
+        showToast('✅ 製品「' + name + '」を追加しました');
+        document.getElementById('newProductCode').value = '';
+        document.getElementById('newProductName').value = '';
+        document.getElementById('newProductDesc').value = '';
+        loadProducts();
+      })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; btn.textContent = '＋ 製品を追加'; });
+  }
+
+  function openQRModal(productCode, productName) {
+    document.getElementById('qrContainer').innerHTML = '';
+    document.getElementById('qrProductName').textContent = productName;
+    document.getElementById('qrProductCode').textContent = productCode;
+    new QRCode(document.getElementById('qrContainer'), {
+      text: productCode,
+      width: 200,
+      height: 200,
+      colorDark: '#1e293b',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    document.getElementById('qrModal').classList.add('show');
+  }
+
+  function openEditProduct(docId, code, name, desc) {
+    document.getElementById('editProductDocId').value = docId;
+    document.getElementById('editProductCode').value  = code;
+    document.getElementById('editProductName').value  = name;
+    document.getElementById('editProductDesc').value  = desc;
+    document.getElementById('editProductModal').classList.add('show');
+  }
+
+  function handleUpdateProduct() {
+    var docId = document.getElementById('editProductDocId').value;
+    var code  = document.getElementById('editProductCode').value.trim();
+    var name  = document.getElementById('editProductName').value.trim();
+    var desc  = document.getElementById('editProductDesc').value.trim();
+    var btn   = document.getElementById('saveProductBtn');
+    btn.disabled = true;
+    updateProduct(docId, code, name, desc)
+      .then(function () { closeModal('editProductModal'); showToast('✅ 製品情報を更新しました'); loadProducts(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  function handleUnbindCC(docId, productName) {
+    if (!confirm('「' + productName + '」のCC紐付を解除しますか？')) return;
+    unbindProductCC(docId)
+      .then(function () { showToast('🔗 CC紐付を解除しました'); loadProducts(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); });
+  }
+
+  function openDeleteProduct(docId, productName) {
+    pendingDocId = docId;
+    document.getElementById('deleteProductTarget').textContent = '「' + productName + '」を削除します。この操作は取り消せません。';
+    document.getElementById('deleteProductModal').classList.add('show');
+  }
+
+  function handleDeleteProduct() {
+    var btn = document.getElementById('deleteProductConfirmBtn');
+    btn.disabled = true;
+    deleteProduct(pendingDocId)
+      .then(function () { closeModal('deleteProductModal'); showToast('🗑️ 製品を削除しました'); loadProducts(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  // =====================================================
+  // 場所マスタ
+  // =====================================================
+  function loadLocations() {
+    document.getElementById('locationListArea').innerHTML = '<div class="loading-row">読み込み中…</div>';
+    getLocations()
+      .then(function (locations) { renderLocationList(locations); })
+      .catch(function (err) {
+        document.getElementById('locationListArea').innerHTML =
+          '<div class="loading-row" style="color:#dc2626;">読み込みエラー: ' + err.message + '</div>';
+      });
+  }
+
+  function renderLocationList(locations) {
+    if (locations.length === 0) {
+      document.getElementById('locationListArea').innerHTML = '<div class="loading-row">場所が登録されていません</div>';
+      return;
+    }
+    var html = '<div class="fade-in">';
+    locations.forEach(function (loc) {
+      html += '<div class="list-item">';
+      html += '<div class="item-icon location">📍</div>';
+      html += '<div class="item-body">';
+      html += '<div class="item-title">' + escHtml(loc.location_name) + '</div>';
+      html += '<div class="item-sub">コード: ' + escHtml(loc.location_code) + ' &nbsp;|&nbsp; CCID: <strong>' + escHtml(loc.cc_id) + '</strong>';
+      if (loc.description) html += '<br>' + escHtml(loc.description);
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="item-actions">';
+      html += '<button class="icon-btn" title="編集" onclick="openEditLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_code) + '\',\'' + escAttr(loc.location_name) + '\',\'' + escAttr(loc.cc_id) + '\',\'' + escAttr(loc.description || '') + '\')">✏️</button>';
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_name) + '\')">🗑️</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('locationListArea').innerHTML = html;
+  }
+
+  function handleAddLocation() {
+    var code = document.getElementById('newLocCode').value.trim();
+    var name = document.getElementById('newLocName').value.trim();
+    var ccid = document.getElementById('newLocCCID').value.trim();
+    var desc = document.getElementById('newLocDesc').value.trim();
+    var btn  = document.getElementById('addLocBtn');
+    btn.disabled = true; btn.textContent = '追加中…';
+    addLocation(code, name, ccid, desc)
+      .then(function () {
+        showToast('✅ 場所「' + name + '」を追加しました');
+        document.getElementById('newLocCode').value  = '';
+        document.getElementById('newLocName').value  = '';
+        document.getElementById('newLocCCID').value  = '';
+        document.getElementById('newLocDesc').value  = '';
+        loadLocations();
+      })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; btn.textContent = '＋ 場所を追加'; });
+  }
+
+  function openEditLocation(docId, code, name, ccid, desc) {
+    document.getElementById('editLocationDocId').value = docId;
+    document.getElementById('editLocationCode').value  = code;
+    document.getElementById('editLocationName').value  = name;
+    document.getElementById('editLocationCCID').value  = ccid;
+    document.getElementById('editLocationDesc').value  = desc;
+    document.getElementById('editLocationModal').classList.add('show');
+  }
+
+  function handleUpdateLocation() {
+    var docId = document.getElementById('editLocationDocId').value;
+    var code  = document.getElementById('editLocationCode').value.trim();
+    var name  = document.getElementById('editLocationName').value.trim();
+    var ccid  = document.getElementById('editLocationCCID').value.trim();
+    var desc  = document.getElementById('editLocationDesc').value.trim();
+    var btn   = document.getElementById('saveLocationBtn');
+    btn.disabled = true;
+    updateLocation(docId, code, name, ccid, desc)
+      .then(function () { closeModal('editLocationModal'); showToast('✅ 場所情報を更新しました'); loadLocations(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  function openDeleteLocation(docId, locName) {
+    pendingDocId = docId;
+    document.getElementById('deleteLocationTarget').textContent = '「' + locName + '」を削除します。この操作は取り消せません。';
+    document.getElementById('deleteLocationModal').classList.add('show');
+  }
+
+  function handleDeleteLocation() {
+    var btn = document.getElementById('deleteLocationConfirmBtn');
+    btn.disabled = true;
+    deleteLocation(pendingDocId)
+      .then(function () { closeModal('deleteLocationModal'); showToast('🗑️ 場所を削除しました'); loadLocations(); })
+      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .finally(function () { btn.disabled = false; });
   }
 
   // =====================================================
@@ -626,8 +930,6 @@
     document.getElementById(id).classList.remove('show');
     pendingDocId = null;
   }
-
-  // モーダル外クリックで閉じる
   document.querySelectorAll('.modal-overlay').forEach(function (el) {
     el.addEventListener('click', function (e) {
       if (e.target === el) closeModal(el.id);
@@ -642,13 +944,10 @@
     var el = document.getElementById('toast');
     el.textContent = msg;
     el.className = 'toast' + (isError ? ' error-toast' : '');
-    // 再トリガー用
     void el.offsetWidth;
     el.classList.add('show');
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () {
-      el.classList.remove('show');
-    }, 3000);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3000);
   }
 
   // =====================================================
@@ -656,23 +955,20 @@
   // =====================================================
   function escHtml(str) {
     if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
   function escAttr(str) {
     if (str == null) return '';
-    return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
   }
 </script>
 
-<!-- Firebase SDK（</body>直前で確実に順番通り読み込み） -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="db.js"></script>
+<!-- QRコード生成ライブラリ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>
