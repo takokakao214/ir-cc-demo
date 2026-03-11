@@ -8,7 +8,7 @@ const USERS_COLLECTION = 'cc_users';
 // Firebase 初期化（重複防止）
 // -----------------------------------------------------
 if (!firebase.apps.length) {
-  firebase.initializeApp(FIREBASE_CONFIG);
+  firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
 
