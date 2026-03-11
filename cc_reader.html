@@ -282,79 +282,6 @@
       margin-top: 4px;
     }
 
-    /* 読み取り履歴 */
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .history-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      gap: 12px;
-      background: var(--card);
-      transition: background 0.1s;
-    }
-
-    .history-item:active {
-      background: var(--bg);
-    }
-
-    .history-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .history-icon.ok  { background: var(--success-light); }
-    .history-icon.ng  { background: var(--error-light); }
-
-    .history-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .history-codes {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .history-time {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .history-count {
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--border);
-      border-radius: 20px;
-      padding: 2px 8px;
-      flex-shrink: 0;
-    }
-
-    .clear-btn {
-      font-size: 13px;
-      color: var(--error);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
-      -webkit-tap-highlight-color: transparent;
-    }
-
     /* エラーバナー */
     .error-banner {
       background: var(--error-light);
@@ -515,19 +442,6 @@
     </div>
   </div>
 
-  <!-- 読み取り履歴 -->
-  <div class="card" id="historyCard">
-    <div class="card-header">
-      <h2>読み取り履歴</h2>
-      <button class="clear-btn" onclick="clearHistory()">クリア</button>
-    </div>
-    <div id="historyArea">
-      <div class="empty-state">
-        <span class="empty-icon">📋</span>
-        <p>履歴がありません</p>
-      </div>
-    </div>
-  </div>
 
 </main>
 
@@ -554,11 +468,6 @@
     sessionStorage.removeItem('cc_auth');
     location.replace('login.html');
   }
-
-  // ==================================================
-  // 状態管理
-  // ==================================================
-  var history = [];
 
   // ==================================================
   // IroatoReader 動作環境チェック
@@ -657,11 +566,9 @@
       if (res.status && codes.length > 0) {
         // ✅ 読み取り成功
         renderResultSuccess(codes, timeStr);
-        addHistory(true, codes, timeStr);
       } else if (res.status && codes.length === 0) {
         // ⚠️ カメラは起動したがコードなしで完了
         renderResultError(timeStr);
-        addHistory(false, [], timeStr);
       }
       // status=false は上でキャンセルとして処理済み
 
@@ -719,56 +626,6 @@
   function showFatalError(msg) {
     document.getElementById('resultArea').innerHTML =
       '<div class="error-banner" style="margin:16px;"><span class="err-icon">⚠️</span><div>' + escHtml(msg) + '</div></div>';
-  }
-
-  // ==================================================
-  // 履歴追加
-  // ==================================================
-  function addHistory(success, codes, timeStr) {
-    var label = success && codes.length > 0
-      ? codes.map(function (c) { return c.code; }).join(' / ')
-      : '読み取り失敗';
-
-    history.unshift({ success: success, label: label, count: codes.length, time: timeStr });
-
-    renderHistory();
-  }
-
-  // ==================================================
-  // 履歴描画
-  // ==================================================
-  function renderHistory() {
-    if (history.length === 0) {
-      document.getElementById('historyArea').innerHTML =
-        '<div class="empty-state"><span class="empty-icon">📋</span><p>履歴がありません</p></div>';
-      return;
-    }
-
-    var html = '<div class="history-list">';
-    for (var i = 0; i < history.length; i++) {
-      var h = history[i];
-      html += '<div class="history-item">';
-      html += '<div class="history-icon ' + (h.success ? 'ok' : 'ng') + '">'
-            + (h.success ? '✅' : '❌') + '</div>';
-      html += '<div class="history-info">';
-      html += '<div class="history-codes">' + escHtml(h.label) + '</div>';
-      html += '<div class="history-time">' + h.time + '</div>';
-      html += '</div>';
-      if (h.success && h.count > 0) {
-        html += '<div class="history-count">' + h.count + '件</div>';
-      }
-      html += '</div>';
-    }
-    html += '</div>';
-    document.getElementById('historyArea').innerHTML = html;
-  }
-
-  // ==================================================
-  // 履歴クリア
-  // ==================================================
-  function clearHistory() {
-    history = [];
-    renderHistory();
   }
 
   // ==================================================
