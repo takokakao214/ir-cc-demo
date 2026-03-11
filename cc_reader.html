@@ -207,6 +207,63 @@
       font-size: 14px;
     }
 
+    /* 製品確認テーブル */
+    .product-table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .product-table-scroll {
+      max-height: 220px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .product-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .product-table thead th {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      padding: 8px 10px;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .product-table tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+    .product-table tbody tr:last-child { border-bottom: none; }
+    .product-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .product-table td {
+      padding: 8px 10px;
+      vertical-align: middle;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .td-name   { font-weight: 600; color: var(--text); }
+    .td-code   { color: var(--muted); font-size: 12px; }
+    .td-loc    { font-size: 11px; color: var(--warn); }
+    .td-loc-none { font-size: 11px; color: var(--border); }
+    .table-footer {
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     /* アラートモーダル */
     .modal-overlay {
       display: none;
@@ -669,23 +726,43 @@
 
         lbProducts = found.map(function (r) { return r.product; });
 
-        // 確認リスト描画
-        var html = '';
-        found.forEach(function (r) {
+        // テーブルビュー描画
+        var rows = '';
+        found.forEach(function (r, i) {
           var p = r.product;
-          var locTxt = p.current_location_name
-            ? ' <span style="color:var(--warn);">→ 現在: ' + escHtml(p.current_location_name) + '</span>' : '';
-          html += '<div class="confirmed-item"><div class="ci-icon">📦</div><div class="ci-body">' +
-            '<div class="ci-title">' + escHtml(p.product_name) + '</div>' +
-            '<div class="ci-sub">コード: ' + escHtml(p.product_code) + ' | CC: ' + escHtml(r.ccId) + locTxt + '</div>' +
-            '</div></div>';
+          var locCell = p.current_location_name
+            ? '<span class="td-loc">→ ' + escHtml(p.current_location_name) + '</span>'
+            : '<span class="td-loc-none">—</span>';
+          rows +=
+            '<tr>' +
+            '<td class="td-name">' + escHtml(p.product_name) + '</td>' +
+            '<td class="td-code">' + escHtml(p.product_code) + '</td>' +
+            '<td class="td-code">' + escHtml(r.ccId) + '</td>' +
+            '<td>' + locCell + '</td>' +
+            '</tr>';
         });
-        if (notFound.length > 0) {
-          html += '<div style="font-size:12px;color:var(--warn);padding:8px 12px;background:var(--warn-light);border-radius:8px;margin-top:4px;">' +
-            '⚠️ ' + notFound.length + '件のCCは未登録のためスキップされます</div>';
-        }
-        document.getElementById('lbFoundCount').textContent = found.length + '件の製品が確認されました';
-        document.getElementById('lbProductConfirm').innerHTML = '<div class="fade-in">' + html + '</div>';
+        var warnRow = notFound.length > 0
+          ? '<div style="font-size:12px;color:var(--warn);padding:7px 10px;background:var(--warn-light);border-top:1px solid var(--border);">' +
+            '⚠️ ' + notFound.length + '件のCCは未登録のためスキップされます</div>'
+          : '';
+        var tableHtml =
+          '<div class="product-table-wrap fade-in">' +
+          '<div class="product-table-scroll">' +
+          '<table class="product-table">' +
+          '<thead><tr>' +
+          '<th>製品名</th><th>製品コード</th><th>CC</th><th>現在地</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+          '</table>' +
+          '</div>' +
+          '<div class="table-footer">' +
+          '<span>✅ <strong>' + found.length + '件</strong>の製品が確認されました</span>' +
+          (notFound.length > 0 ? '<span style="color:var(--warn);">⚠️ ' + notFound.length + '件スキップ</span>' : '') +
+          '</div>' +
+          '</div>';
+
+        document.getElementById('lbFoundCount').textContent = '';
+        document.getElementById('lbProductConfirm').innerHTML = tableHtml;
         document.getElementById('lbDot1').className = 'step-dot done';
         document.getElementById('lbDot2').className = 'step-dot active';
         document.getElementById('lbStep1').style.display = 'none';
