@@ -306,3 +306,15 @@ async function bindProductLocation(productDocId, locationDocId, locationCode, lo
     updated_at: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
+
+// =====================================================
+// 場所に紐づく製品一覧取得（ピッキング用）
+// =====================================================
+async function getProductsByLocation(locationId) {
+  var snapshot = await db.collection(PRODUCTS_COLLECTION)
+    .where('current_location_id', '==', locationId)
+    .get();
+  return snapshot.docs.map(function (doc) {
+    return Object.assign({ id: doc.id }, doc.data());
+  });
+}

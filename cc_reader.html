@@ -264,6 +264,47 @@
       align-items: center;
     }
 
+    /* ピッキング */
+    .pick-select {
+      width: 100%;
+      padding: 11px 36px 11px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--bg);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .pick-select:focus { border-color: var(--primary); }
+    .pick-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+    /* 確認モーダル */
+    .confirm-modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px 20px 20px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .confirm-modal-icon  { font-size: 40px; text-align: center; margin-bottom: 10px; }
+    .confirm-modal-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 14px; }
+    .confirm-summary {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.8;
+      margin-bottom: 18px;
+    }
+    .confirm-summary strong { color: var(--primary); }
+
     /* アラートモーダル */
     .modal-overlay {
       display: none;
@@ -349,10 +390,10 @@
         <div class="menu-title">入出庫</div>
         <span class="coming-badge">準備中</span>
       </div>
-      <div class="menu-card disabled">
+      <div class="menu-card primary-card" onclick="showScreen('screenPicking')">
         <div class="menu-icon">🛒</div>
         <div class="menu-title">ピッキング</div>
-        <span class="coming-badge">準備中</span>
+        <div class="menu-sub">対象CCをハイライト</div>
       </div>
     </div>
 
@@ -440,6 +481,57 @@
 </div>
 
 
+<!-- ロケーション紐付 確認モーダル -->
+<div class="modal-overlay" id="lbConfirmModal">
+  <div class="confirm-modal">
+    <div class="confirm-modal-icon">📍</div>
+    <div class="confirm-modal-title">紐付けを確定しますか？</div>
+    <div class="confirm-summary" id="lbConfirmSummary"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeLbConfirmModal()">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1;" id="lbConfirmOkBtn" onclick="executeLbBind()">確定する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== ピッキング 画面 ======================== -->
+<div class="screen" id="screenPicking">
+  <main>
+    <button class="btn btn-ghost" onclick="showScreen('screenMenu')" style="width:auto;padding:8px 16px;font-size:13px;margin-bottom:4px;">← メニューに戻る</button>
+
+    <!-- 場所選択 -->
+    <div class="card">
+      <div class="card-header"><h2>場所選択（必須）</h2></div>
+      <div class="card-body">
+        <select class="pick-select" id="pickLocSelect" onchange="onPickLocChange()">
+          <option value="">— 場所を選択してください —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 製品選択（場所選択後に表示） -->
+    <div class="card" id="pickProductCard" style="display:none;">
+      <div class="card-header">
+        <h2>製品選択（任意）</h2>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="pickSelectAll(true)">全選択</button>
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="pickSelectAll(false)">全解除</button>
+        </div>
+      </div>
+      <div id="pickProductArea"><div class="loading-row">読み込み中…</div></div>
+      <div style="padding:8px 10px;font-size:12px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border);">
+        ※ チェックした製品のみをピッキング対象にします（全選択 = 場所の全製品が対象）
+      </div>
+    </div>
+
+    <!-- スキャン開始ボタン -->
+    <button class="btn btn-primary" id="pickStartBtn" onclick="startPickingScan()" style="display:none;">
+      <span class="btn-icon">🔍</span> ピッキングスキャン開始
+    </button>
+  </main>
+</div>
+
+
 <!-- アラートモーダル -->
 <div class="modal-overlay" id="alertModal">
   <div class="alert-modal">
@@ -483,11 +575,12 @@
   // =====================================================
   // 画面切替
   // =====================================================
-  var screens = ['screenMenu', 'screenProductBind', 'screenLocationBind'];
+  var screens = ['screenMenu', 'screenProductBind', 'screenLocationBind', 'screenPicking'];
   var screenTitles = {
     screenMenu:         '入出庫デモ',
     screenProductBind:  '製品紐付',
-    screenLocationBind: 'ロケーション紐付'
+    screenLocationBind: 'ロケーション紐付',
+    screenPicking:      'ピッキング'
   };
 
   function showScreen(id) {
@@ -501,6 +594,7 @@
     // 画面を開く際に状態リセット
     if (id === 'screenProductBind') pbReset();
     if (id === 'screenLocationBind') lbReset();
+    if (id === 'screenPicking')      initPickingScreen();
   }
 
   // =====================================================
@@ -774,36 +868,27 @@
     });
   }
 
+  var pendingLbLocation = null; // 確認待ちの場所
+
   function lbScanLocationCC() {
     if (!lbProducts || lbProducts.length === 0) return;
     scanCC(true).then(function (ccId) {
-      if (!ccId) return; // キャンセル
+      if (!ccId) return;
       showLoading('場所を検索中…');
       return getLocationByCCId(ccId).then(function (location) {
         hideLoading();
         if (!location) {
-          // 場所未登録 → モーダル表示（Step2 のまま再スキャン可能）
           showAlertModal('❌', '場所が見つかりません',
             'CC「' + escHtml(ccId) + '」に紐づく場所が登録されていません。<br>管理画面で場所マスタを登録してください。');
           return;
         }
-        // 全製品を同じ場所に一括紐づけ
-        var bindPromises = lbProducts.map(function (product) {
-          return bindProductLocation(product.id, location.id, location.location_code, location.location_name, location.cc_id);
-        });
-        return Promise.all(bindPromises).then(function () {
-          document.getElementById('lbDot2').className = 'step-dot done';
-          document.getElementById('lbStep2').style.display = 'none';
-          document.getElementById('lbResult').style.display = 'block';
-          document.getElementById('lbResult').innerHTML =
-            '<div class="result-box fade-in">' +
-            '<div class="result-icon">✅</div>' +
-            '<div class="result-title">ロケーション紐付完了！</div>' +
-            '<div class="result-body"><strong>' + lbProducts.length + '件</strong>の製品を<br>' +
-            '場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
-            '</div>' +
-            '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">続けて紐付けする</button>';
-        });
+        // 確認モーダルを表示
+        pendingLbLocation = location;
+        var summary =
+          '場所：<strong>' + escHtml(location.location_name) + '</strong>（' + escHtml(location.location_code) + '）<br>' +
+          '対象：<strong>' + lbProducts.length + '件</strong>の製品を紐づけます';
+        document.getElementById('lbConfirmSummary').innerHTML = summary;
+        document.getElementById('lbConfirmModal').classList.add('show');
       });
     }).catch(function (e) {
       hideLoading();
@@ -811,7 +896,191 @@
     });
   }
 
+  function closeLbConfirmModal() {
+    document.getElementById('lbConfirmModal').classList.remove('show');
+    pendingLbLocation = null;
+  }
+  document.getElementById('lbConfirmModal').addEventListener('click', function (e) {
+    if (e.target === this) closeLbConfirmModal();
+  });
 
+  function executeLbBind() {
+    if (!pendingLbLocation || !lbProducts.length) return;
+    var location = pendingLbLocation;
+    var btn = document.getElementById('lbConfirmOkBtn');
+    btn.disabled = true;
+    btn.textContent = '処理中…';
+    var bindPromises = lbProducts.map(function (product) {
+      return bindProductLocation(product.id, location.id, location.location_code, location.location_name, location.cc_id);
+    });
+    Promise.all(bindPromises).then(function () {
+      closeLbConfirmModal();
+      document.getElementById('lbDot2').className = 'step-dot done';
+      document.getElementById('lbStep2').style.display = 'none';
+      document.getElementById('lbResult').style.display = 'block';
+      document.getElementById('lbResult').innerHTML =
+        '<div class="result-box fade-in">' +
+        '<div class="result-icon">✅</div>' +
+        '<div class="result-title">ロケーション紐付完了！</div>' +
+        '<div class="result-body"><strong>' + lbProducts.length + '件</strong>の製品を<br>' +
+        '場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
+        '</div>' +
+        '<button class="btn btn-ghost" onclick="lbReset()" style="margin-top:12px;">続けて紐付けする</button>';
+    }).catch(function (e) {
+      closeLbConfirmModal();
+      showAlertModal('❌', 'エラー', escHtml(e.message));
+    }).finally(function () {
+      btn.disabled = false;
+      btn.textContent = '確定する';
+    });
+  }
+
+
+
+  // =====================================================
+  // ピッキング
+  // =====================================================
+  var pickLocations = [];
+  var pickProducts  = [];
+
+  function initPickingScreen() {
+    pickLocations = [];
+    pickProducts  = [];
+    var sel = document.getElementById('pickLocSelect');
+    sel.innerHTML = '<option value="">— 場所を選択してください —</option>';
+    document.getElementById('pickProductCard').style.display = 'none';
+    document.getElementById('pickStartBtn').style.display   = 'none';
+
+    showLoading('場所を読み込み中…');
+    getLocations().then(function (locations) {
+      hideLoading();
+      pickLocations = locations;
+      if (locations.length === 0) {
+        showAlertModal('ℹ️', '場所が未登録', '管理画面で場所マスタを登録してください。');
+        return;
+      }
+      locations.forEach(function (loc) {
+        var opt = document.createElement('option');
+        opt.value       = loc.id;
+        opt.textContent = loc.location_name + '（' + loc.location_code + '）';
+        sel.appendChild(opt);
+      });
+    }).catch(function (e) {
+      hideLoading();
+      showAlertModal('❌', 'エラー', escHtml(e.message));
+    });
+  }
+
+  function onPickLocChange() {
+    var locId = document.getElementById('pickLocSelect').value;
+    document.getElementById('pickProductCard').style.display = 'none';
+    document.getElementById('pickStartBtn').style.display   = 'none';
+    pickProducts = [];
+    if (!locId) return;
+
+    showLoading('製品を読み込み中…');
+    getProductsByLocation(locId).then(function (products) {
+      hideLoading();
+      pickProducts = products;
+      renderPickProducts(products);
+      document.getElementById('pickProductCard').style.display = 'block';
+      if (products.length > 0) {
+        document.getElementById('pickStartBtn').style.display = 'flex';
+      }
+    }).catch(function (e) {
+      hideLoading();
+      showAlertModal('❌', 'エラー', escHtml(e.message));
+    });
+  }
+
+  function renderPickProducts(products) {
+    var area = document.getElementById('pickProductArea');
+    if (products.length === 0) {
+      area.innerHTML = '<div class="pick-empty">この場所に紐づく製品がありません</div>';
+      return;
+    }
+    var rows = '';
+    products.forEach(function (p) {
+      var hasCC = !!p.cc_id;
+      rows +=
+        '<tr>' +
+        '<td style="padding:8px 10px;width:36px;text-align:center;">' +
+          (hasCC
+            ? '<input type="checkbox" id="pick_' + escAttr(p.id) + '" checked style="width:16px;height:16px;cursor:pointer;">'
+            : '<span style="color:var(--border);">—</span>') +
+        '</td>' +
+        '<td class="td-name" style="padding:8px 10px;">' + escHtml(p.product_name) + '</td>' +
+        '<td class="td-code" style="padding:8px 10px;">' + escHtml(p.product_code) + '</td>' +
+        '<td style="padding:8px 10px;">' +
+          (hasCC
+            ? '<span style="font-size:11px;background:var(--success-light);color:var(--success);padding:2px 7px;border-radius:10px;">CC有</span>'
+            : '<span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:10px;">CC無</span>') +
+        '</td>' +
+        '</tr>';
+    });
+    area.innerHTML =
+      '<div class="product-table-scroll" style="max-height:220px;">' +
+      '<table class="product-table">' +
+      '<thead><tr><th style="width:36px;"></th><th>製品名</th><th>製品コード</th><th>CC</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table></div>';
+  }
+
+  function pickSelectAll(checked) {
+    pickProducts.forEach(function (p) {
+      var cb = document.getElementById('pick_' + p.id);
+      if (cb) cb.checked = checked;
+    });
+  }
+
+  function startPickingScan() {
+    if (!isIroatoReaderEnv()) {
+      showAlertModal('⚠️', '環境エラー', 'IroatoReaderアプリで開いてください。');
+      return;
+    }
+    // チェック済み & CC有りの製品だけをターゲットに
+    var targets = pickProducts.filter(function (p) {
+      var cb = document.getElementById('pick_' + p.id);
+      return cb && cb.checked && p.cc_id;
+    });
+    if (targets.length === 0) {
+      showAlertModal('⚠️', 'ピッキング対象なし', '選択された製品にCCが紐づいていません。<br>先に製品紐付を行ってください。');
+      return;
+    }
+    // IroatoReader に渡すターゲットコード配列
+    // codes: [{code: CCID, label: 製品名}] — ターゲットは緑枠+ラベル表示、それ以外は赤枠
+    var targetCodes = targets.map(function (p) {
+      return { code: p.cc_id, label: p.product_name };
+    });
+    var opts = {
+      mode:           IroatoReader.multi,
+      analyzeLevel:   3,
+      resolution:     IroatoReader.r640x480,
+      cameraPosition: IroatoReader.back,
+      lineColor:      IroatoReader.green,
+      errLineColor:   IroatoReader.red,
+      buttonText:     '終了',
+      labelText:      'ピッキング中… ' + targets.length + '件を探しています',
+      codes:          targetCodes
+    };
+    showLoading('カメラを起動中…');
+    try {
+      var reader = new IroatoReader('cc', opts);
+      reader.read(function (res) {
+        hideLoading();
+        // ピッキングは検索目的のためスキャン後の特別な処理はなし
+      });
+    } catch (e) {
+      hideLoading();
+      showAlertModal('❌', 'エラー', escHtml(e.message));
+    }
+  }
+
+  // escAttr（cc_reader 用）
+  function escAttr(str) {
+    if (str == null) return '';
+    return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+  }
 
   // =====================================================
   // アラートモーダル
