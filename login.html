@@ -192,11 +192,6 @@
     }
   </style>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="db.js"></script>
 </head>
 <body>
 
@@ -315,5 +310,11 @@
     document.getElementById('password').focus();
   }
 </script>
+
+<!-- Firebase SDK（</body>直前で確実に順番通り読み込み） -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 </body>
 </html>

@@ -2,15 +2,20 @@
 // db.js — Firestore データベース操作
 // =====================================================
 
-const USERS_COLLECTION = 'cc_users';
+var USERS_COLLECTION = 'cc_users';
+var db;
 
 // -----------------------------------------------------
 // Firebase 初期化（重複防止）
 // -----------------------------------------------------
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+try {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  db = firebase.firestore();
+} catch (e) {
+  console.error('Firebase 初期化エラー:', e);
 }
-const db = firebase.firestore();
 
 // -----------------------------------------------------
 // パスワードハッシュ（SHA-256）
