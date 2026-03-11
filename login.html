@@ -191,6 +191,12 @@
       animation: fadeUp 0.4s ease;
     }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="db.js"></script>
 </head>
 <body>
 
@@ -233,14 +239,6 @@
 
 <script>
   // =====================================================
-  // 認証情報（変更する場合はここを編集してください）
-  // =====================================================
-  var USERS = [
-    { username: 'admin', password: '1234' }
-    // 追加する場合: { username: 'user2', password: 'pass2' }
-  ];
-
-  // =====================================================
   // 既にログイン済みならリダイレクト
   // =====================================================
   (function () {
@@ -250,7 +248,7 @@
   })();
 
   // =====================================================
-  // ログイン処理
+  // ログイン処理（Firestore 認証）
   // =====================================================
   function doLogin(e) {
     e.preventDefault();
@@ -268,30 +266,53 @@
     passwordEl.classList.remove('error');
     errorEl.classList.remove('show');
 
-    // 認証チェック
-    var matched = USERS.some(function (u) {
-      return u.username === username && u.password === password;
-    });
-
-    if (matched) {
-      btn.disabled = true;
-      btn.innerHTML = '<span>✅</span> ログイン成功…';
-      sessionStorage.setItem('cc_auth', '1');
-      setTimeout(function () {
-        location.replace('cc_reader.html');
-      }, 600);
-    } else {
-      // 失敗アニメーション
-      usernameEl.classList.add('error');
-      passwordEl.classList.add('error');
+    if (!username || !password) {
+      errorEl.querySelector('span:last-child').textContent = 'ユーザー名とパスワードを入力してください';
       errorEl.classList.add('show');
-      document.querySelector('.card').classList.add('shake');
-      setTimeout(function () {
-        document.querySelector('.card').classList.remove('shake');
-      }, 400);
-      passwordEl.value = '';
-      passwordEl.focus();
+      return;
     }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> 認証中…';
+
+    authenticateUser(username, password)
+      .then(function (ok) {
+        if (ok) {
+          btn.innerHTML = '<span>✅</span> ログイン成功…';
+          sessionStorage.setItem('cc_auth', '1');
+          sessionStorage.setItem('cc_username', username);
+          setTimeout(function () {
+            location.replace('cc_reader.html');
+          }, 600);
+        } else {
+          showLoginError('ユーザー名またはパスワードが違います');
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔓</span> ログイン';
+        }
+      })
+      .catch(function (err) {
+        console.error(err);
+        showLoginError('接続エラーが発生しました。しばらく後に再試行してください。');
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔓</span> ログイン';
+      });
+  }
+
+  function showLoginError(msg) {
+    var usernameEl = document.getElementById('username');
+    var passwordEl = document.getElementById('password');
+    var errorEl    = document.getElementById('errorMsg');
+
+    usernameEl.classList.add('error');
+    passwordEl.classList.add('error');
+    errorEl.querySelector('span:last-child').textContent = msg;
+    errorEl.classList.add('show');
+    document.querySelector('.card').classList.add('shake');
+    setTimeout(function () {
+      document.querySelector('.card').classList.remove('shake');
+    }, 400);
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
   }
 </script>
 </body>

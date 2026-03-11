@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>ユーザー管理 — カメレオンコードリーダー</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="db.js"></script>
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --error: #dc2626;
+      --error-light: #fee2e2;
+      --warn: #d97706;
+      --warn-light: #fef3c7;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ヘッダー */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 20px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 { font-size: 17px; font-weight: 700; flex: 1; }
+
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* メイン */
+    main {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* カード */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-body { padding: 16px; }
+
+    /* フォーム */
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+
+    .form-row input:focus { border-color: var(--primary); }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-danger  { background: var(--error);   color: #fff; }
+    .btn-warn    { background: var(--warn);     color: #fff; }
+    .btn-success { background: var(--success);  color: #fff; }
+    .btn-ghost {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 9999;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast.error-toast { background: var(--error); }
+
+    /* ユーザーリスト */
+    .user-list { display: flex; flex-direction: column; }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .user-item:last-child { border-bottom: none; }
+
+    .user-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .user-avatar.inactive {
+      background: var(--border);
+      color: var(--muted);
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+
+    .user-name {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-name.inactive { color: var(--muted); }
+
+    .user-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .status-badge.active   { background: var(--success-light); color: var(--success); }
+    .status-badge.inactive { background: var(--border);        color: var(--muted); }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      cursor: pointer;
+      font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .icon-btn:active { background: var(--border); }
+
+    /* ローディング */
+    .loading-row {
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .modal input:focus { border-color: var(--primary); }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* 管理者ロック画面 */
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .lock-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .lock-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .lock-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .lock-error {
+      font-size: 13px;
+      color: var(--error);
+      margin-bottom: 10px;
+      display: none;
+    }
+    .lock-error.show { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.25s ease; }
+  </style>
+</head>
+<body>
+
+<!-- 管理者ロック画面 -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-title">🔐 管理者認証</div>
+    <div class="lock-sub">管理者パスワードを入力してください</div>
+    <div class="lock-error" id="lockError">パスワードが違います</div>
+    <input type="password" id="adminPwInput" placeholder="管理者パスワード"
+           style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:15px;margin-bottom:14px;outline:none;-webkit-appearance:none;"
+           onkeydown="if(event.key==='Enter')checkAdminPw()" />
+    <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="checkAdminPw()">
+      入室する
+    </button>
+    <div style="text-align:center;margin-top:14px;">
+      <a href="cc_reader.html" style="font-size:13px;color:#64748b;text-decoration:none;">← リーダーに戻る</a>
+    </div>
+  </div>
+</div>
+
+<header>
+  <span style="font-size:22px;">👥</span>
+  <h1>ユーザー管理</h1>
+  <a href="cc_reader.html" class="back-btn">← 戻る</a>
+</header>
+
+<main>
+
+  <!-- ユーザー追加カード -->
+  <div class="card">
+    <div class="card-header">
+      <h2>ユーザー追加</h2>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <input type="text" id="newUsername" placeholder="ユーザー名"
+               autocapitalize="none" autocorrect="off" autocomplete="off" />
+        <input type="password" id="newPassword" placeholder="パスワード"
+               autocomplete="new-password" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;" id="addBtn" onclick="handleAddUser()">
+        ＋ ユーザーを追加
+      </button>
+    </div>
+  </div>
+
+  <!-- ユーザー一覧カード -->
+  <div class="card">
+    <div class="card-header">
+      <h2>ユーザー一覧</h2>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadUsers()">
+        🔄 更新
+      </button>
+    </div>
+    <div id="userListArea">
+      <div class="loading-row">読み込み中…</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- パスワード変更モーダル -->
+<div class="modal-overlay" id="changePwModal">
+  <div class="modal">
+    <h3>🔑 パスワード変更</h3>
+    <p id="changePwTarget"></p>
+    <input type="password" id="newPwInput" placeholder="新しいパスワード"
+           autocomplete="new-password" />
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('changePwModal')">キャンセル</button>
+      <button class="btn btn-primary" id="changePwBtn" onclick="handleChangePassword()">変更する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>🗑️ ユーザー削除</h3>
+    <p id="deleteTarget"></p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('deleteModal')">キャンセル</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn" onclick="handleDeleteUser()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // =====================================================
+  // 管理者ロック
+  // =====================================================
+  var adminUnlocked = false;
+  var pendingDocId  = null;
+  var pendingAction = null;
+
+  function checkAdminPw() {
+    var input = document.getElementById('adminPwInput').value;
+    if (input === ADMIN_PASSWORD) {
+      adminUnlocked = true;
+      document.getElementById('lockScreen').style.display = 'none';
+      loadUsers();
+    } else {
+      document.getElementById('lockError').classList.add('show');
+      document.getElementById('adminPwInput').value = '';
+      document.getElementById('adminPwInput').focus();
+    }
+  }
+
+  // Enter キーで認証
+  document.getElementById('adminPwInput').focus();
+
+  // =====================================================
+  // ユーザー一覧 読み込み
+  // =====================================================
+  function loadUsers() {
+    document.getElementById('userListArea').innerHTML =
+      '<div class="loading-row">読み込み中…</div>';
+
+    getUsers()
+      .then(function (users) { renderUserList(users); })
+      .catch(function (err) {
+        console.error(err);
+        document.getElementById('userListArea').innerHTML =
+          '<div class="loading-row" style="color:#dc2626;">読み込みエラー: ' + err.message + '</div>';
+      });
+  }
+
+  // =====================================================
+  // ユーザー一覧 描画
+  // =====================================================
+  function renderUserList(users) {
+    if (users.length === 0) {
+      document.getElementById('userListArea').innerHTML =
+        '<div class="loading-row">ユーザーが登録されていません</div>';
+      return;
+    }
+
+    var html = '<div class="user-list fade-in">';
+    users.forEach(function (u) {
+      var initial = u.username ? u.username.charAt(0).toUpperCase() : '?';
+      var createdStr = u.createdAt
+        ? new Date(u.createdAt.toDate()).toLocaleDateString('ja-JP')
+        : '—';
+      html += '<div class="user-item">';
+      html += '<div class="user-avatar ' + (u.active ? '' : 'inactive') + '">' + escHtml(initial) + '</div>';
+      html += '<div class="user-info">';
+      html += '<div class="user-name ' + (u.active ? '' : 'inactive') + '">' + escHtml(u.username) + '</div>';
+      html += '<div class="user-meta">登録日: ' + createdStr + '</div>';
+      html += '</div>';
+      html += '<span class="status-badge ' + (u.active ? 'active' : 'inactive') + '">'
+            + (u.active ? '有効' : '無効') + '</span>';
+      html += '<div class="user-actions">';
+      // 有効/無効トグル
+      html += '<button class="icon-btn" title="' + (u.active ? '無効にする' : '有効にする') + '"'
+            + ' onclick="handleToggle(\'' + u.id + '\',' + u.active + ')">'
+            + (u.active ? '🚫' : '✅') + '</button>';
+      // パスワード変更
+      html += '<button class="icon-btn" title="パスワード変更"'
+            + ' onclick="openChangePw(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">'
+            + '🔑</button>';
+      // 削除
+      html += '<button class="icon-btn" title="削除"'
+            + ' onclick="openDelete(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">'
+            + '🗑️</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    document.getElementById('userListArea').innerHTML = html;
+  }
+
+  // =====================================================
+  // ユーザー追加
+  // =====================================================
+  function handleAddUser() {
+    var username = document.getElementById('newUsername').value.trim();
+    var password = document.getElementById('newPassword').value;
+    var btn = document.getElementById('addBtn');
+
+    btn.disabled = true;
+    btn.textContent = '追加中…';
+
+    addUser(username, password)
+      .then(function () {
+        showToast('✅ ユーザー「' + username + '」を追加しました');
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        loadUsers();
+      })
+      .catch(function (err) {
+        showToast('❌ ' + err.message, true);
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = '＋ ユーザーを追加';
+      });
+  }
+
+  // =====================================================
+  // 有効/無効 トグル
+  // =====================================================
+  function handleToggle(docId, currentActive) {
+    toggleUserActive(docId, !currentActive)
+      .then(function () {
+        showToast(currentActive ? '🚫 無効にしました' : '✅ 有効にしました');
+        loadUsers();
+      })
+      .catch(function (err) {
+        showToast('❌ ' + err.message, true);
+      });
+  }
+
+  // =====================================================
+  // パスワード変更 モーダル
+  // =====================================================
+  function openChangePw(docId, username) {
+    pendingDocId  = docId;
+    pendingAction = 'changePw';
+    document.getElementById('changePwTarget').textContent =
+      '「' + username + '」の新しいパスワードを入力してください';
+    document.getElementById('newPwInput').value = '';
+    document.getElementById('changePwModal').classList.add('show');
+    setTimeout(function () {
+      document.getElementById('newPwInput').focus();
+    }, 100);
+  }
+
+  function handleChangePassword() {
+    var newPw = document.getElementById('newPwInput').value;
+    var btn   = document.getElementById('changePwBtn');
+    btn.disabled = true;
+
+    changePassword(pendingDocId, newPw)
+      .then(function () {
+        closeModal('changePwModal');
+        showToast('🔑 パスワードを変更しました');
+      })
+      .catch(function (err) {
+        showToast('❌ ' + err.message, true);
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  }
+
+  // =====================================================
+  // 削除 モーダル
+  // =====================================================
+  function openDelete(docId, username) {
+    pendingDocId = docId;
+    document.getElementById('deleteTarget').textContent =
+      '「' + username + '」を削除します。この操作は取り消せません。';
+    document.getElementById('deleteModal').classList.add('show');
+  }
+
+  function handleDeleteUser() {
+    var btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+
+    deleteUser(pendingDocId)
+      .then(function () {
+        closeModal('deleteModal');
+        showToast('🗑️ ユーザーを削除しました');
+        loadUsers();
+      })
+      .catch(function (err) {
+        showToast('❌ ' + err.message, true);
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  }
+
+  // =====================================================
+  // モーダル開閉
+  // =====================================================
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    pendingDocId = null;
+  }
+
+  // モーダル外クリックで閉じる
+  document.querySelectorAll('.modal-overlay').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      if (e.target === el) closeModal(el.id);
+    });
+  });
+
+  // =====================================================
+  // トースト通知
+  // =====================================================
+  var toastTimer = null;
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast' + (isError ? ' error-toast' : '');
+    // 再トリガー用
+    void el.offsetWidth;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove('show');
+    }, 3000);
+  }
+
+  // =====================================================
+  // ユーティリティ
+  // =====================================================
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escAttr(str) {
+    if (str == null) return '';
+    return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
