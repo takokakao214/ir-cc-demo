@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>カメレオンコードリーダー</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --error: #dc2626;
+      --error-light: #fee2e2;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 env(safe-area-inset-bottom) 0;
+    }
+
+    /* ヘッダー */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 20px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header .icon {
+      font-size: 24px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* メインコンテンツ */
+    main {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* カード */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    /* オプション設定 */
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .option-row:last-child {
+      border-bottom: none;
+    }
+
+    .option-label {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .option-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 28px;
+      min-width: 110px;
+    }
+
+    /* スキャンボタン */
+    .scan-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    .scan-btn:active {
+      background: var(--primary-dark);
+      transform: scale(0.98);
+    }
+
+    .scan-btn .btn-icon {
+      font-size: 22px;
+    }
+
+    /* 結果エリア */
+    .result-area {
+      min-height: 80px;
+    }
+
+    /* 空状態 */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      gap: 8px;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 40px;
+      opacity: 0.4;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    /* 最新読み取り結果 */
+    .latest-result {
+      padding: 16px;
+    }
+
+    .result-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.success { background: var(--success); }
+    .status-dot.error   { background: var(--error); }
+
+    .result-codes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .code-item {
+      background: var(--primary-light);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .code-item.error-item {
+      background: var(--error-light);
+    }
+
+    .code-badge {
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .code-badge.error-badge {
+      background: var(--error);
+    }
+
+    .code-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      word-break: break-all;
+      letter-spacing: 0.05em;
+    }
+
+    .code-value.error-value {
+      color: var(--error);
+    }
+
+    .code-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* 読み取り履歴 */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 12px;
+      background: var(--card);
+      transition: background 0.1s;
+    }
+
+    .history-item:active {
+      background: var(--bg);
+    }
+
+    .history-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .history-icon.ok  { background: var(--success-light); }
+    .history-icon.ng  { background: var(--error-light); }
+
+    .history-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-codes {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-time {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .history-count {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+    }
+
+    .clear-btn {
+      font-size: 13px;
+      color: var(--error);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* エラーバナー */
+    .error-banner {
+      background: var(--error-light);
+      border: 1px solid #fca5a5;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--error);
+    }
+
+    .error-banner .err-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ローディングスピナー */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* フェードイン */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.25s ease;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="icon">📷</span>
+  <h1>カメレオンコードリーダー</h1>
+</header>
+
+<main>
+
+  <!-- エラーバナー（IroatoReader 未対応環境用） -->
+  <div class="error-banner" id="envError" style="display:none;">
+    <span class="err-icon">⚠️</span>
+    <div>
+      このページは <strong>IroatoReader</strong> アプリ上でご利用ください。<br>
+      通常のブラウザでは動作しません。
+    </div>
+  </div>
+
+  <!-- オプション設定 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>設定</h2>
+    </div>
+    <div class="card-body">
+      <div class="option-row">
+        <div>
+          <div class="option-label">読み取りモード</div>
+          <div class="option-sub">1コード / 複数コード</div>
+        </div>
+        <select id="optMode">
+          <option value="multi">複数</option>
+          <option value="single">1コード</option>
+        </select>
+      </div>
+      <div class="option-row">
+        <div>
+          <div class="option-label">解析レベル</div>
+          <div class="option-sub">高いほど精度↑・速度↓</div>
+        </div>
+        <select id="optAnalyzeLevel">
+          <option value="1">1（最速）</option>
+          <option value="2">2</option>
+          <option value="3" selected>3（標準）</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8（最高精度）</option>
+        </select>
+      </div>
+      <div class="option-row">
+        <div>
+          <div class="option-label">解像度</div>
+          <div class="option-sub">カメラ解像度</div>
+        </div>
+        <select id="optResolution">
+          <option value="r640x480" selected>640×480</option>
+          <option value="r1280x720">1280×720</option>
+          <option value="r1920x1080">1920×1080</option>
+        </select>
+      </div>
+      <div class="option-row">
+        <div>
+          <div class="option-label">カメラ</div>
+          <div class="option-sub">背面 / 前面</div>
+        </div>
+        <select id="optCameraPos">
+          <option value="back">背面</option>
+          <option value="front">前面</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- スキャンボタン -->
+  <button class="scan-btn" id="scanBtn" onclick="startScan()">
+    <span class="btn-icon">🔍</span>
+    カメレオンコードを読み取る
+  </button>
+
+  <!-- 最新読み取り結果 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>読み取り結果</h2>
+    </div>
+    <div id="resultArea" class="result-area">
+      <div class="empty-state">
+        <span class="empty-icon">🔲</span>
+        <p>まだ読み取りが行われていません</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 読み取り履歴 -->
+  <div class="card" id="historyCard">
+    <div class="card-header">
+      <h2>読み取り履歴</h2>
+      <button class="clear-btn" onclick="clearHistory()">クリア</button>
+    </div>
+    <div id="historyArea">
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <p>履歴がありません</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ローディングオーバーレイ -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">カメラを起動中…</div>
+</div>
+
+<script>
+  // ==================================================
+  // 状態管理
+  // ==================================================
+  var history = [];
+
+  // ==================================================
+  // IroatoReader 動作環境チェック
+  // ==================================================
+  function isIroatoReaderEnv() {
+    return typeof IroatoReader !== 'undefined';
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!isIroatoReaderEnv()) {
+      document.getElementById('envError').style.display = 'flex';
+    }
+  });
+
+  // ==================================================
+  // オプション取得
+  // ==================================================
+  function getOptions() {
+    var modeVal    = document.getElementById('optMode').value;
+    var levelVal   = parseInt(document.getElementById('optAnalyzeLevel').value, 10);
+    var resVal     = document.getElementById('optResolution').value;
+    var camPosVal  = document.getElementById('optCameraPos').value;
+
+    // IroatoReader の定数マッピング
+    var modeMap = {
+      'multi':  IroatoReader.multi,
+      'single': IroatoReader.single
+    };
+    var resMap = {
+      'r640x480':   IroatoReader.r640x480,
+      'r1280x720':  IroatoReader.r1280x720,
+      'r1920x1080': IroatoReader.r1920x1080
+    };
+    var camPosMap = {
+      'back':  IroatoReader.back,
+      'front': IroatoReader.front
+    };
+
+    return {
+      mode:           modeMap[modeVal],
+      analyzeLevel:   levelVal,
+      resolution:     resMap[resVal],
+      cameraPosition: camPosMap[camPosVal],
+      lineColor:      IroatoReader.green,
+      errLineColor:   IroatoReader.red,
+      buttonText:     '完了',
+      labelText:      'カメレオンコードを枠内に合わせてください'
+    };
+  }
+
+  // ==================================================
+  // スキャン開始
+  // ==================================================
+  function startScan() {
+    if (!isIroatoReaderEnv()) {
+      alert('IroatoReader アプリ上でのみ使用できます。');
+      return;
+    }
+
+    showLoading(true);
+
+    try {
+      var opts = getOptions();
+      var reader = new IroatoReader('cc', opts);
+
+      reader.read(function (res) {
+        showLoading(false);
+        handleResult(res);
+      });
+    } catch (e) {
+      showLoading(false);
+      showFatalError('IroatoReader の起動に失敗しました: ' + e.message);
+    }
+  }
+
+  // ==================================================
+  // 結果処理
+  // ==================================================
+  function handleResult(res) {
+    var now = new Date();
+    var timeStr = formatTime(now);
+
+    if (res.status && res.data && res.data.codes && res.data.codes.length > 0) {
+      // 成功
+      var codes = res.data.codes;
+      renderResultSuccess(codes, timeStr);
+      addHistory(true, codes, timeStr);
+    } else {
+      // 読み取り失敗 or キャンセル
+      renderResultError(timeStr);
+      // キャンセルの場合は履歴に残さない（status=false かつ data なし）
+      if (res.data && res.data.codes !== undefined) {
+        addHistory(false, [], timeStr);
+      }
+    }
+  }
+
+  // ==================================================
+  // 結果描画（成功）
+  // ==================================================
+  function renderResultSuccess(codes, timeStr) {
+    var html = '<div class="latest-result fade-in">';
+    html += '<div class="result-status"><span class="status-dot success"></span>読み取り成功 ― ' + timeStr + '</div>';
+    html += '<div class="result-codes">';
+
+    for (var i = 0; i < codes.length; i++) {
+      var c = codes[i];
+      html += '<div class="code-item">';
+      html += '<span class="code-badge">CC</span>';
+      html += '<div>';
+      html += '<div class="code-value">' + escHtml(c.code) + '</div>';
+      html += '<div class="code-meta">座標: (' + Math.round(c.centerX) + ', ' + Math.round(c.centerY) + ')'
+            + ' &nbsp;|&nbsp; 日時: ' + escHtml(c.datetime) + '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+    document.getElementById('resultArea').innerHTML = html;
+  }
+
+  // ==================================================
+  // 結果描画（失敗）
+  // ==================================================
+  function renderResultError(timeStr) {
+    var html = '<div class="latest-result fade-in">';
+    html += '<div class="result-status"><span class="status-dot error"></span>読み取り失敗 ― ' + timeStr + '</div>';
+    html += '<div class="result-codes">';
+    html += '<div class="code-item error-item">';
+    html += '<span class="code-badge error-badge">NG</span>';
+    html += '<div>';
+    html += '<div class="code-value error-value">コードを認識できませんでした</div>';
+    html += '<div class="code-meta">再度スキャンしてください</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div></div>';
+    document.getElementById('resultArea').innerHTML = html;
+  }
+
+  // ==================================================
+  // 致命的エラー表示
+  // ==================================================
+  function showFatalError(msg) {
+    document.getElementById('resultArea').innerHTML =
+      '<div class="error-banner" style="margin:16px;"><span class="err-icon">⚠️</span><div>' + escHtml(msg) + '</div></div>';
+  }
+
+  // ==================================================
+  // 履歴追加
+  // ==================================================
+  function addHistory(success, codes, timeStr) {
+    var label = success && codes.length > 0
+      ? codes.map(function (c) { return c.code; }).join(' / ')
+      : '読み取り失敗';
+
+    history.unshift({ success: success, label: label, count: codes.length, time: timeStr });
+
+    renderHistory();
+  }
+
+  // ==================================================
+  // 履歴描画
+  // ==================================================
+  function renderHistory() {
+    if (history.length === 0) {
+      document.getElementById('historyArea').innerHTML =
+        '<div class="empty-state"><span class="empty-icon">📋</span><p>履歴がありません</p></div>';
+      return;
+    }
+
+    var html = '<div class="history-list">';
+    for (var i = 0; i < history.length; i++) {
+      var h = history[i];
+      html += '<div class="history-item">';
+      html += '<div class="history-icon ' + (h.success ? 'ok' : 'ng') + '">'
+            + (h.success ? '✅' : '❌') + '</div>';
+      html += '<div class="history-info">';
+      html += '<div class="history-codes">' + escHtml(h.label) + '</div>';
+      html += '<div class="history-time">' + h.time + '</div>';
+      html += '</div>';
+      if (h.success && h.count > 0) {
+        html += '<div class="history-count">' + h.count + '件</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    document.getElementById('historyArea').innerHTML = html;
+  }
+
+  // ==================================================
+  // 履歴クリア
+  // ==================================================
+  function clearHistory() {
+    history = [];
+    renderHistory();
+  }
+
+  // ==================================================
+  // ローディング制御
+  // ==================================================
+  function showLoading(show) {
+    var el = document.getElementById('loadingOverlay');
+    if (show) {
+      el.classList.add('show');
+    } else {
+      el.classList.remove('show');
+    }
+  }
+
+  // ==================================================
+  // ユーティリティ
+  // ==================================================
+  function formatTime(d) {
+    var pad = function (n) { return ('0' + n).slice(-2); };
+    return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate())
+         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
