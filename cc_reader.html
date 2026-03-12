@@ -379,17 +379,14 @@
       <div class="menu-card primary-card" onclick="showScreen('screenProductBind')">
         <div class="menu-icon"><i class="fa-solid fa-tag"></i></div>
         <div class="menu-title">製品紐付</div>
-        <div class="menu-sub">QR→CC を紐づける</div>
       </div>
       <div class="menu-card primary-card" onclick="showScreen('screenLocationBind')">
         <div class="menu-icon"><i class="fa-solid fa-location-dot"></i></div>
         <div class="menu-title">ロケーション紐付</div>
-        <div class="menu-sub">製品を場所に紐づける</div>
       </div>
       <div class="menu-card primary-card" onclick="showScreen('screenPicking')">
         <div class="menu-icon"><i class="fa-solid fa-cart-shopping"></i></div>
         <div class="menu-title">ピッキング</div>
-        <div class="menu-sub">対象CCをハイライト</div>
       </div>
     </div>
 
@@ -412,7 +409,6 @@
       <div class="step-card">
         <div class="step-num">STEP 1 / 2</div>
         <div class="step-title">製品QRコードをスキャン</div>
-        <div class="step-sub">管理画面で表示した製品のQRコードをスキャンしてください</div>
         <button class="btn btn-primary" onclick="pbScanQR()">
           <span class="btn-icon">📱</span> QRコードをスキャン
         </button>
@@ -424,7 +420,6 @@
       <div class="step-card">
         <div class="step-num">STEP 2 / 2</div>
         <div class="step-title">CCをスキャン</div>
-        <div class="step-sub">製品に貼り付けるカメレオンコードを1つスキャンしてください</div>
         <button class="btn btn-primary" onclick="pbScanCC()">
           <span class="btn-icon">🔲</span> CCをスキャン
         </button>
@@ -451,7 +446,6 @@
       <div class="step-card">
         <div class="step-num">STEP 1 / 2</div>
         <div class="step-title">製品CCをまとめてスキャン</div>
-        <div class="step-sub">複数の製品に貼付されたカメレオンコードをまとめてスキャンしてください</div>
         <button class="btn btn-primary" onclick="lbScanProductCC()">
           <span class="btn-icon">🔲</span> 製品CCをまとめてスキャン
         </button>
@@ -464,7 +458,6 @@
       <div class="step-card">
         <div class="step-num">STEP 2 / 2</div>
         <div class="step-title">場所のCCをスキャン</div>
-        <div class="step-sub">ロケーション（棚・エリアなど）に設置したカメレオンコードをスキャンしてください</div>
         <button class="btn btn-primary" onclick="lbScanLocationCC()">
           <span class="btn-icon">🔲</span> 場所CCをスキャン
         </button>
@@ -515,9 +508,6 @@
         </div>
       </div>
       <div id="pickProductArea"><div class="loading-row">読み込み中…</div></div>
-      <div style="padding:8px 10px;font-size:12px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border);">
-        ※ チェックした製品のみをピッキング対象にします（全選択 = 場所の全製品が対象）
-      </div>
     </div>
 
     <!-- スキャン開始ボタン -->
@@ -1007,17 +997,12 @@
         '</td>' +
         '<td class="td-name" style="padding:8px 10px;">' + escHtml(p.product_name) + '</td>' +
         '<td class="td-code" style="padding:8px 10px;">' + escHtml(p.product_code) + '</td>' +
-        '<td style="padding:8px 10px;">' +
-          (hasCC
-            ? '<span style="font-size:11px;background:var(--success-light);color:var(--success);padding:2px 7px;border-radius:10px;">CC有</span>'
-            : '<span style="font-size:11px;background:var(--border);color:var(--muted);padding:2px 7px;border-radius:10px;">CC無</span>') +
-        '</td>' +
         '</tr>';
     });
     area.innerHTML =
       '<div class="product-table-scroll" style="max-height:220px;">' +
       '<table class="product-table">' +
-      '<thead><tr><th style="width:36px;"></th><th>製品名</th><th>製品コード</th><th>CC</th></tr></thead>' +
+      '<thead><tr><th style="width:36px;"></th><th>製品名</th><th>製品コード</th></tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
       '</table></div>';
   }
