@@ -1047,11 +1047,12 @@
       showAlertModal('⚠️', 'ピッキング対象なし', '選択された製品にCCが紐づいていません。<br>先に製品紐付を行ってください。');
       return;
     }
-    // IroatoReader に渡すターゲットコード配列
-    // codes: [{code: CCID, label: 製品名}] — ターゲットは緑枠+ラベル表示、それ以外は赤枠
-    var targetCodes = targets.map(function (p) {
-      return { code: p.cc_id, label: p.product_name };
-    });
+    // IroatoReader に渡すターゲットコード配列・表示ラベル
+    // searchCodes: ターゲットCCIDの文字列配列（リスト外は errLineColor で表示）
+    // displayData: { "CCID": "製品名" } — ターゲットCC上にラベル表示
+    var searchCodes = targets.map(function (p) { return String(p.cc_id); });
+    var displayData = {};
+    targets.forEach(function (p) { displayData[String(p.cc_id)] = p.product_name; });
     var opts = {
       mode:           IroatoReader.multi,
       analyzeLevel:   3,
@@ -1061,7 +1062,8 @@
       errLineColor:   IroatoReader.red,
       buttonText:     '終了',
       labelText:      'ピッキング中… ' + targets.length + '件を探しています',
-      codes:          targetCodes
+      searchCodes:    searchCodes,
+      displayData:    displayData
     };
     showLoading('カメラを起動中…');
     try {
