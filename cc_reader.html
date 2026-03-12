@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>入出庫デモ</title>
+  <title>ピッキングデモ</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -74,7 +74,7 @@
     /* メニューグリッド */
     .menu-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 12px;
     }
     .menu-card {
@@ -363,7 +363,7 @@
 
 <header>
   <span style="font-size:22px;">📦</span>
-  <h1 id="headerTitle">入出庫デモ</h1>
+  <h1 id="headerTitle">ピッキングデモ</h1>
   <button class="header-btn" onclick="doLogout()">ログアウト</button>
 </header>
 
@@ -384,11 +384,6 @@
         <div class="menu-icon">📍</div>
         <div class="menu-title">ロケーション紐付</div>
         <div class="menu-sub">製品を場所に紐づける</div>
-      </div>
-      <div class="menu-card disabled">
-        <div class="menu-icon">🔄</div>
-        <div class="menu-title">入出庫</div>
-        <span class="coming-badge">準備中</span>
       </div>
       <div class="menu-card primary-card" onclick="showScreen('screenPicking')">
         <div class="menu-icon">🛒</div>
@@ -577,7 +572,7 @@
   // =====================================================
   var screens = ['screenMenu', 'screenProductBind', 'screenLocationBind', 'screenPicking'];
   var screenTitles = {
-    screenMenu:         '入出庫デモ',
+    screenMenu:         'ピッキングデモ',
     screenProductBind:  '製品紐付',
     screenLocationBind: 'ロケーション紐付',
     screenPicking:      'ピッキング'
@@ -588,7 +583,7 @@
       document.getElementById(s).classList.remove('active');
     });
     document.getElementById(id).classList.add('active');
-    document.getElementById('headerTitle').textContent = screenTitles[id] || '入出庫デモ';
+    document.getElementById('headerTitle').textContent = screenTitles[id] || 'ピッキングデモ';
     window.scrollTo(0, 0);
 
     // 画面を開く際に状態リセット
