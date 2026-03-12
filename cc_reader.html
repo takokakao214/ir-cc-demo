@@ -358,11 +358,12 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.25s ease; }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
 
 <header>
-  <span style="font-size:22px;">📦</span>
+  <i class="fa-solid fa-box" style="font-size:22px;color:#fff;"></i>
   <h1 id="headerTitle">ピッキングデモ</h1>
   <button class="header-btn" onclick="doLogout()">ログアウト</button>
 </header>
@@ -371,22 +372,22 @@
 <div class="screen active" id="screenMenu">
   <main>
     <div id="envErrorBanner" style="display:none;" class="env-error">
-      ⚠️ <div>このページは <strong>IroatoReader</strong> アプリ上でご利用ください。通常ブラウザでは動作しません。</div>
+      <i class="fa-solid fa-triangle-exclamation"></i> <div>このページは <strong>IroatoReader</strong> アプリ上でご利用ください。通常ブラウザでは動作しません。</div>
     </div>
 
     <div class="menu-grid">
       <div class="menu-card primary-card" onclick="showScreen('screenProductBind')">
-        <div class="menu-icon">🏷️</div>
+        <div class="menu-icon"><i class="fa-solid fa-tag"></i></div>
         <div class="menu-title">製品紐付</div>
         <div class="menu-sub">QR→CC を紐づける</div>
       </div>
       <div class="menu-card primary-card" onclick="showScreen('screenLocationBind')">
-        <div class="menu-icon">📍</div>
+        <div class="menu-icon"><i class="fa-solid fa-location-dot"></i></div>
         <div class="menu-title">ロケーション紐付</div>
         <div class="menu-sub">製品を場所に紐づける</div>
       </div>
       <div class="menu-card primary-card" onclick="showScreen('screenPicking')">
-        <div class="menu-icon">🛒</div>
+        <div class="menu-icon"><i class="fa-solid fa-cart-shopping"></i></div>
         <div class="menu-title">ピッキング</div>
         <div class="menu-sub">対象CCをハイライト</div>
       </div>
@@ -479,7 +480,7 @@
 <!-- ロケーション紐付 確認モーダル -->
 <div class="modal-overlay" id="lbConfirmModal">
   <div class="confirm-modal">
-    <div class="confirm-modal-icon">📍</div>
+    <div class="confirm-modal-icon"><i class="fa-solid fa-location-dot"></i></div>
     <div class="confirm-modal-title">紐付けを確定しますか？</div>
     <div class="confirm-summary" id="lbConfirmSummary"></div>
     <div style="display:flex;gap:10px;">
@@ -521,7 +522,7 @@
 
     <!-- スキャン開始ボタン -->
     <button class="btn btn-primary" id="pickStartBtn" onclick="startPickingScan()" style="display:none;">
-      <span class="btn-icon">🔍</span> ピッキングスキャン開始
+      <i class="fa-solid fa-magnifying-glass"></i> ピッキングスキャン開始
     </button>
   </main>
 </div>
@@ -530,7 +531,7 @@
 <!-- アラートモーダル -->
 <div class="modal-overlay" id="alertModal">
   <div class="alert-modal">
-    <div class="alert-modal-icon"  id="alertIcon">❌</div>
+    <div class="alert-modal-icon"  id="alertIcon"></div>
     <div class="alert-modal-title" id="alertTitle"></div>
     <div class="alert-modal-body"  id="alertBody"></div>
     <button class="btn btn-ghost" onclick="closeAlertModal()" style="width:100%;font-size:15px;padding:12px;">閉じる</button>
@@ -717,10 +718,10 @@
         pbProduct = product;
         // 確認表示
         var warnMsg = product.cc_id
-          ? '<div style="font-size:12px;color:var(--warn);margin-top:6px;">⚠️ 現在 CC: ' + escHtml(product.cc_id) + ' が紐づいています。上書きされます。</div>'
+          ? '<div style="font-size:12px;color:var(--warn);margin-top:6px;"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> 現在 CC: ' + escHtml(product.cc_id) + ' が紐づいています。上書きされます。</div>'
           : '';
         document.getElementById('pbProductConfirm').innerHTML =
-          '<div class="confirmed-item fade-in"><div class="ci-icon">✅</div><div class="ci-body">' +
+          '<div class="confirmed-item fade-in"><div class="ci-icon"><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i></div><div class="ci-body">' +
           '<div class="ci-title">' + escHtml(product.product_name) + '</div>' +
           '<div class="ci-sub">コード: ' + escHtml(product.product_code) + (product.description ? ' | ' + escHtml(product.description) : '') + '</div>' +
           warnMsg + '</div></div>';
@@ -748,7 +749,7 @@
         document.getElementById('pbResult').style.display = 'block';
         document.getElementById('pbResult').innerHTML =
           '<div class="result-box fade-in">' +
-          '<div class="result-icon">✅</div>' +
+          '<div class="result-icon"><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i></div>' +
           '<div class="result-title">紐付け完了！</div>' +
           '<div class="result-body">製品「' + escHtml(pbProduct.product_name) + '」に<br>CC: <strong>' + escHtml(ccId) + '</strong><br>を紐づけました。</div>' +
           '</div>' +
@@ -759,7 +760,7 @@
       document.getElementById('pbResult').style.display = 'block';
       document.getElementById('pbResult').innerHTML =
         '<div class="result-box error-box fade-in">' +
-        '<div class="result-icon">❌</div>' +
+        '<div class="result-icon"><i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i></div>' +
         '<div class="result-title">エラー</div>' +
         '<div class="result-body">' + escHtml(e.message) + '</div>' +
         '</div>' +
@@ -774,7 +775,7 @@
     var div = document.createElement('div');
     div.className = 'step-error';
     div.style.cssText = 'margin-top:10px;background:var(--error-light);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--error);';
-    div.innerHTML = '❌ ' + msg;
+    div.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + msg;
     el.appendChild(div);
   }
 
@@ -832,7 +833,7 @@
         });
         var warnRow = notFound.length > 0
           ? '<div style="font-size:12px;color:var(--warn);padding:7px 10px;background:var(--warn-light);border-top:1px solid var(--border);">' +
-            '⚠️ ' + notFound.length + '件のCCは未登録のためスキップされます</div>'
+            '<i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> ' + notFound.length + '件のCCは未登録のためスキップされます</div>'
           : '';
         var tableHtml =
           '<div class="product-table-wrap fade-in">' +
@@ -845,8 +846,8 @@
           '</table>' +
           '</div>' +
           '<div class="table-footer">' +
-          '<span>✅ <strong>' + found.length + '件</strong>の製品が確認されました</span>' +
-          (notFound.length > 0 ? '<span style="color:var(--warn);">⚠️ ' + notFound.length + '件スキップ</span>' : '') +
+          '<span><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> <strong>' + found.length + '件</strong>の製品が確認されました</span>' +
+          (notFound.length > 0 ? '<span style="color:var(--warn);"><i class="fa-solid fa-triangle-exclamation"></i> ' + notFound.length + '件スキップ</span>' : '') +
           '</div>' +
           '</div>';
 
@@ -915,7 +916,7 @@
       document.getElementById('lbResult').style.display = 'block';
       document.getElementById('lbResult').innerHTML =
         '<div class="result-box fade-in">' +
-        '<div class="result-icon">✅</div>' +
+        '<div class="result-icon"><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i></div>' +
         '<div class="result-title">ロケーション紐付完了！</div>' +
         '<div class="result-body"><strong>' + lbProducts.length + '件</strong>の製品を<br>' +
         '場所「<strong>' + escHtml(location.location_name) + '</strong>」（' + escHtml(location.location_code) + '）<br>に紐づけました。</div>' +
@@ -1083,8 +1084,14 @@
   // アラートモーダル
   // =====================================================
   var alertOnClose = null;
+  var _alertIconMap = {
+    '❌': '<i class="fa-solid fa-circle-xmark"  style="color:#ef4444;"></i>',
+    '⚠️': '<i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i>',
+    'ℹ️': '<i class="fa-solid fa-circle-info"   style="color:#3b82f6;"></i>',
+    '✅': '<i class="fa-solid fa-circle-check"  style="color:#22c55e;"></i>'
+  };
   function showAlertModal(icon, title, body, onClose) {
-    document.getElementById('alertIcon').textContent  = icon || '❌';
+    document.getElementById('alertIcon').innerHTML = _alertIconMap[icon] || '<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i>';
     document.getElementById('alertTitle').textContent = title || '';
     document.getElementById('alertBody').innerHTML    = body  || '';
     alertOnClose = onClose || null;

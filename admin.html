@@ -332,13 +332,14 @@
     }
     .fade-in { animation: fadeIn 0.25s ease; }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
 
 <!-- 管理者ロック画面 -->
 <div class="lock-screen" id="lockScreen">
   <div class="lock-card">
-    <div class="lock-title">🔐 管理者認証</div>
+    <div class="lock-title"><i class="fa-solid fa-key"></i> 管理者認証</div>
     <div class="lock-sub">管理者パスワードを入力してください</div>
     <div class="lock-error" id="lockError">パスワードが違います</div>
     <input type="password" id="adminPwInput" placeholder="管理者パスワード"
@@ -349,15 +350,15 @@
 </div>
 
 <header>
-  <span style="font-size:22px;">⚙️</span>
+  <i class="fa-solid fa-gear" style="font-size:22px;color:#fff;"></i>
   <h1>管理画面</h1>
 </header>
 
 <!-- タブバー -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tabBtnUsers"     onclick="switchTab('users')">👥 ユーザー</button>
-  <button class="tab-btn"        id="tabBtnProducts"  onclick="switchTab('products')">📦 製品マスタ</button>
-  <button class="tab-btn"        id="tabBtnLocations" onclick="switchTab('locations')">📍 場所マスタ</button>
+  <button class="tab-btn active" id="tabBtnUsers"     onclick="switchTab('users')"><i class="fa-solid fa-users"></i> ユーザー</button>
+  <button class="tab-btn"        id="tabBtnProducts"  onclick="switchTab('products')"><i class="fa-solid fa-box"></i> 製品マスタ</button>
+  <button class="tab-btn"        id="tabBtnLocations" onclick="switchTab('locations')"><i class="fa-solid fa-location-dot"></i> 場所マスタ</button>
 </div>
 
 <!-- ==================== ユーザータブ ==================== -->
@@ -376,7 +377,7 @@
     <div class="card">
       <div class="card-header">
         <h2>ユーザー一覧</h2>
-        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadUsers()">🔄 更新</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadUsers()"><i class="fa-solid fa-rotate"></i> 更新</button>
       </div>
       <div id="userListArea"><div class="loading-row">読み込み中…</div></div>
     </div>
@@ -411,7 +412,7 @@
     <div class="card">
       <div class="card-header">
         <h2>製品一覧</h2>
-        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadProducts()">🔄 更新</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadProducts()"><i class="fa-solid fa-rotate"></i> 更新</button>
       </div>
       <div id="productListArea"><div class="loading-row">読み込み中…</div></div>
     </div>
@@ -450,7 +451,7 @@
     <div class="card">
       <div class="card-header">
         <h2>場所一覧</h2>
-        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadLocations()">🔄 更新</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="loadLocations()"><i class="fa-solid fa-rotate"></i> 更新</button>
       </div>
       <div id="locationListArea"><div class="loading-row">読み込み中…</div></div>
     </div>
@@ -460,7 +461,7 @@
 <!-- ========== モーダル：ユーザーパスワード変更 ========== -->
 <div class="modal-overlay" id="changePwModal">
   <div class="modal">
-    <h3>🔑 パスワード変更</h3>
+    <h3><i class="fa-solid fa-key"></i> パスワード変更</h3>
     <p id="changePwTarget"></p>
     <input type="password" id="newPwInput" placeholder="新しいパスワード" autocomplete="new-password" />
     <div class="modal-btns">
@@ -473,7 +474,7 @@
 <!-- ========== モーダル：ユーザー削除確認 ========== -->
 <div class="modal-overlay" id="deleteUserModal">
   <div class="modal">
-    <h3>🗑️ ユーザー削除</h3>
+    <h3><i class="fa-solid fa-trash"></i> ユーザー削除</h3>
     <p id="deleteUserTarget"></p>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('deleteUserModal')">キャンセル</button>
@@ -485,7 +486,7 @@
 <!-- ========== モーダル：QRコード表示 ========== -->
 <div class="modal-overlay" id="qrModal">
   <div class="modal" style="max-width:300px;">
-    <h3>📱 製品QRコード</h3>
+    <h3><i class="fa-solid fa-qrcode"></i> 製品QRコード</h3>
     <div class="qr-info" id="qrProductName"></div>
     <div id="qrContainer"></div>
     <div class="qr-code-text" id="qrProductCode"></div>
@@ -498,7 +499,7 @@
 <!-- ========== モーダル：製品編集 ========== -->
 <div class="modal-overlay" id="editProductModal">
   <div class="modal">
-    <h3>✏️ 製品編集</h3>
+    <h3><i class="fa-solid fa-pen"></i> 製品編集</h3>
     <input type="hidden" id="editProductDocId" />
     <label class="modal-label">製品コード *</label>
     <input type="text" id="editProductCode" autocapitalize="characters" autocorrect="off" autocomplete="off" />
@@ -516,7 +517,7 @@
 <!-- ========== モーダル：製品削除確認 ========== -->
 <div class="modal-overlay" id="deleteProductModal">
   <div class="modal">
-    <h3>🗑️ 製品削除</h3>
+    <h3><i class="fa-solid fa-trash"></i> 製品削除</h3>
     <p id="deleteProductTarget"></p>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('deleteProductModal')">キャンセル</button>
@@ -528,7 +529,7 @@
 <!-- ========== モーダル：場所編集 ========== -->
 <div class="modal-overlay" id="editLocationModal">
   <div class="modal">
-    <h3>✏️ 場所編集</h3>
+    <h3><i class="fa-solid fa-pen"></i> 場所編集</h3>
     <input type="hidden" id="editLocationDocId" />
     <label class="modal-label">場所コード *</label>
     <input type="text" id="editLocationCode" autocapitalize="characters" autocorrect="off" autocomplete="off" />
@@ -548,7 +549,7 @@
 <!-- ========== モーダル：場所削除確認 ========== -->
 <div class="modal-overlay" id="deleteLocationModal">
   <div class="modal">
-    <h3>🗑️ 場所削除</h3>
+    <h3><i class="fa-solid fa-trash"></i> 場所削除</h3>
     <p id="deleteLocationTarget"></p>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('deleteLocationModal')">キャンセル</button>
@@ -639,9 +640,9 @@
       html += '</div>';
       html += '<span class="item-badge ' + (u.active ? 'badge-active' : 'badge-inactive') + '">' + (u.active ? '有効' : '無効') + '</span>';
       html += '<div class="item-actions">';
-      html += '<button class="icon-btn" title="' + (u.active ? '無効にする' : '有効にする') + '" onclick="handleToggle(\'' + u.id + '\',' + u.active + ')">' + (u.active ? '🚫' : '✅') + '</button>';
-      html += '<button class="icon-btn" title="パスワード変更" onclick="openChangePw(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">🔑</button>';
-      html += '<button class="icon-btn" title="削除" onclick="openDeleteUser(\'' + u.id + '\',\'' + escAttr(u.username) + '\')">🗑️</button>';
+      html += '<button class="icon-btn" title="' + (u.active ? '無効にする' : '有効にする') + '" onclick="handleToggle(\'' + u.id + '\',' + u.active + ')">' + (u.active ? '<i class="fa-solid fa-ban"></i>' : '<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>') + '</button>';
+      html += '<button class="icon-btn" title="パスワード変更" onclick="openChangePw(\'' + u.id + '\',\'' + escAttr(u.username) + '\')"><i class="fa-solid fa-key"></i></button>';
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteUser(\'' + u.id + '\',\'' + escAttr(u.username) + '\')"><i class="fa-solid fa-trash"></i></button>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -655,19 +656,19 @@
     btn.disabled = true; btn.textContent = '追加中…';
     addUser(username, password)
       .then(function () {
-        showToast('✅ ユーザー「' + username + '」を追加しました');
+        showToast('<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ユーザー「' + username + '」を追加しました');
         document.getElementById('newUsername').value = '';
         document.getElementById('newPassword').value = '';
         loadUsers();
       })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; btn.textContent = '＋ ユーザーを追加'; });
   }
 
   function handleToggle(docId, currentActive) {
     toggleUserActive(docId, !currentActive)
-      .then(function () { showToast(currentActive ? '🚫 無効にしました' : '✅ 有効にしました'); loadUsers(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); });
+      .then(function () { showToast(currentActive ? '<i class="fa-solid fa-ban"></i> 無効にしました' : '<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> 有効にしました'); loadUsers(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); });
   }
 
   function openChangePw(docId, username) {
@@ -683,8 +684,8 @@
     var btn = document.getElementById('changePwBtn');
     btn.disabled = true;
     changePassword(pendingDocId, newPw)
-      .then(function () { closeModal('changePwModal'); showToast('🔑 パスワードを変更しました'); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('changePwModal'); showToast('<i class="fa-solid fa-key"></i> パスワードを変更しました'); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
@@ -698,8 +699,8 @@
     var btn = document.getElementById('deleteUserConfirmBtn');
     btn.disabled = true;
     deleteUser(pendingDocId)
-      .then(function () { closeModal('deleteUserModal'); showToast('🗑️ ユーザーを削除しました'); loadUsers(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('deleteUserModal'); showToast('<i class="fa-solid fa-trash"></i> ユーザーを削除しました'); loadUsers(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
@@ -725,7 +726,7 @@
     products.forEach(function (p) {
       var bound = p.cc_id ? true : false;
       html += '<div class="list-item">';
-      html += '<div class="item-icon product">📦</div>';
+      html += '<div class="item-icon product"><i class="fa-solid fa-box"></i></div>';
       html += '<div class="item-body">';
       html += '<div class="item-title">' + escHtml(p.product_name) + '</div>';
       html += '<div class="item-sub">コード: ' + escHtml(p.product_code);
@@ -736,12 +737,12 @@
       html += '</div>';
       html += '<span class="item-badge ' + (bound ? 'badge-bound' : 'badge-unbound') + '">' + (bound ? 'CC紐付済' : '未紐付') + '</span>';
       html += '<div class="item-actions">';
-      html += '<button class="icon-btn" title="QR表示" onclick="openQRModal(\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\')">📱</button>';
-      html += '<button class="icon-btn" title="編集" onclick="openEditProduct(\'' + p.id + '\',\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\',\'' + escAttr(p.description || '') + '\')">✏️</button>';
+      html += '<button class="icon-btn" title="QR表示" onclick="openQRModal(\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\')"><i class="fa-solid fa-qrcode"></i></button>';
+      html += '<button class="icon-btn" title="編集" onclick="openEditProduct(\'' + p.id + '\',\'' + escAttr(p.product_code) + '\',\'' + escAttr(p.product_name) + '\',\'' + escAttr(p.description || '') + '\')"><i class="fa-solid fa-pen"></i></button>';
       if (bound) {
-        html += '<button class="icon-btn" title="CC紐付解除" onclick="handleUnbindCC(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')">🔗</button>';
+        html += '<button class="icon-btn" title="CC紐付解除" onclick="handleUnbindCC(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')"><i class="fa-solid fa-link-slash"></i></button>';
       }
-      html += '<button class="icon-btn" title="削除" onclick="openDeleteProduct(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')">🗑️</button>';
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteProduct(\'' + p.id + '\',\'' + escAttr(p.product_name) + '\')"><i class="fa-solid fa-trash"></i></button>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -756,13 +757,13 @@
     btn.disabled = true; btn.textContent = '追加中…';
     addProduct(code, name, desc)
       .then(function () {
-        showToast('✅ 製品「' + name + '」を追加しました');
+        showToast('<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> 製品「' + name + '」を追加しました');
         document.getElementById('newProductCode').value = '';
         document.getElementById('newProductName').value = '';
         document.getElementById('newProductDesc').value = '';
         loadProducts();
       })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; btn.textContent = '＋ 製品を追加'; });
   }
 
@@ -797,16 +798,16 @@
     var btn   = document.getElementById('saveProductBtn');
     btn.disabled = true;
     updateProduct(docId, code, name, desc)
-      .then(function () { closeModal('editProductModal'); showToast('✅ 製品情報を更新しました'); loadProducts(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('editProductModal'); showToast('<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> 製品情報を更新しました'); loadProducts(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
   function handleUnbindCC(docId, productName) {
     if (!confirm('「' + productName + '」のCC紐付を解除しますか？')) return;
     unbindProductCC(docId)
-      .then(function () { showToast('🔗 CC紐付を解除しました'); loadProducts(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); });
+      .then(function () { showToast('<i class="fa-solid fa-link-slash"></i> CC紐付を解除しました'); loadProducts(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); });
   }
 
   function openDeleteProduct(docId, productName) {
@@ -819,8 +820,8 @@
     var btn = document.getElementById('deleteProductConfirmBtn');
     btn.disabled = true;
     deleteProduct(pendingDocId)
-      .then(function () { closeModal('deleteProductModal'); showToast('🗑️ 製品を削除しました'); loadProducts(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('deleteProductModal'); showToast('<i class="fa-solid fa-trash"></i> 製品を削除しました'); loadProducts(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
@@ -845,7 +846,7 @@
     var html = '<div class="fade-in">';
     locations.forEach(function (loc) {
       html += '<div class="list-item">';
-      html += '<div class="item-icon location">📍</div>';
+      html += '<div class="item-icon location"><i class="fa-solid fa-location-dot"></i></div>';
       html += '<div class="item-body">';
       html += '<div class="item-title">' + escHtml(loc.location_name) + '</div>';
       html += '<div class="item-sub">コード: ' + escHtml(loc.location_code) + ' &nbsp;|&nbsp; CCID: <strong>' + escHtml(loc.cc_id) + '</strong>';
@@ -853,8 +854,8 @@
       html += '</div>';
       html += '</div>';
       html += '<div class="item-actions">';
-      html += '<button class="icon-btn" title="編集" onclick="openEditLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_code) + '\',\'' + escAttr(loc.location_name) + '\',\'' + escAttr(loc.cc_id) + '\',\'' + escAttr(loc.description || '') + '\')">✏️</button>';
-      html += '<button class="icon-btn" title="削除" onclick="openDeleteLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_name) + '\')">🗑️</button>';
+      html += '<button class="icon-btn" title="編集" onclick="openEditLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_code) + '\',\'' + escAttr(loc.location_name) + '\',\'' + escAttr(loc.cc_id) + '\',\'' + escAttr(loc.description || '') + '\')"><i class="fa-solid fa-pen"></i></button>';
+      html += '<button class="icon-btn" title="削除" onclick="openDeleteLocation(\'' + loc.id + '\',\'' + escAttr(loc.location_name) + '\')"><i class="fa-solid fa-trash"></i></button>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -870,14 +871,14 @@
     btn.disabled = true; btn.textContent = '追加中…';
     addLocation(code, name, ccid, desc)
       .then(function () {
-        showToast('✅ 場所「' + name + '」を追加しました');
+        showToast('<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> 場所「' + name + '」を追加しました');
         document.getElementById('newLocCode').value  = '';
         document.getElementById('newLocName').value  = '';
         document.getElementById('newLocCCID').value  = '';
         document.getElementById('newLocDesc').value  = '';
         loadLocations();
       })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; btn.textContent = '＋ 場所を追加'; });
   }
 
@@ -899,8 +900,8 @@
     var btn   = document.getElementById('saveLocationBtn');
     btn.disabled = true;
     updateLocation(docId, code, name, ccid, desc)
-      .then(function () { closeModal('editLocationModal'); showToast('✅ 場所情報を更新しました'); loadLocations(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('editLocationModal'); showToast('<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> 場所情報を更新しました'); loadLocations(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
@@ -914,8 +915,8 @@
     var btn = document.getElementById('deleteLocationConfirmBtn');
     btn.disabled = true;
     deleteLocation(pendingDocId)
-      .then(function () { closeModal('deleteLocationModal'); showToast('🗑️ 場所を削除しました'); loadLocations(); })
-      .catch(function (err) { showToast('❌ ' + err.message, true); })
+      .then(function () { closeModal('deleteLocationModal'); showToast('<i class="fa-solid fa-trash"></i> 場所を削除しました'); loadLocations(); })
+      .catch(function (err) { showToast('<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> ' + err.message, true); })
       .finally(function () { btn.disabled = false; });
   }
 
@@ -938,7 +939,7 @@
   var toastTimer = null;
   function showToast(msg, isError) {
     var el = document.getElementById('toast');
-    el.textContent = msg;
+    el.innerHTML = msg;
     el.className = 'toast' + (isError ? ' error-toast' : '');
     void el.offsetWidth;
     el.classList.add('show');
